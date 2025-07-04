@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Market Pulse | Real-time Stock Analytics</title>
+    <!-- Bootstrap 5.3 with dark mode support -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- AOS for scroll animations -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Top navigation bar -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <div class="logo-icon me-2">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="logo-text">Market<span>Pulse</span></div>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/about">About</a>
+                    </li>
+                </ul>
+                
+                <div class="d-flex align-items-center">
+                    <div class="theme-toggle me-3">
+                        <i class="fas fa-sun light-icon"></i>
+                        <i class="fas fa-moon dark-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="container px-4 py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card" data-aos="fade-up" data-aos-duration="800">
+                    <div class="card-body p-4 p-md-5">
+                        <h1 class="display-5 fw-bold text-center mb-4">About Market<span class="text-primary">Pulse</span></h1>
+                        
+                        <div class="text-center mb-5">
+                            <div class="d-inline-flex justify-content-center align-items-center p-3 mb-3" style="background: linear-gradient(145deg, #3b82f6, #8b5cf6); border-radius: 20px; width: 80px; height: 80px;">
+                                <i class="fas fa-chart-line text-white" style="font-size: 2.5rem;"></i>
+                            </div>
+                            <p class="lead mb-4">Real-time Stock Analytics Platform</p>
+                        </div>
+                        
+                        <div class="row mb-5">
+                            <div class="col-md-4 text-center mb-4 mb-md-0">
+                                <div class="feature">
+                                    <div class="feature-icon mb-3">
+                                        <i class="fas fa-chart-line fa-2x text-primary"></i>
+                                    </div>
+                                    <h5>Real-time Data</h5>
+                                    <p class="text-muted">Access up-to-date market information with minimal delay</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center mb-4 mb-md-0">
+                                <div class="feature">
+                                    <div class="feature-icon mb-3">
+                                        <i class="fas fa-brain fa-2x text-primary"></i>
+                                    </div>
+                                    <h5>Sentiment Analysis</h5>
+                                    <p class="text-muted">AI-powered news and social sentiment insights</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="feature">
+                                    <div class="feature-icon mb-3">
+                                        <i class="fas fa-tachometer-alt fa-2x text-primary"></i>
+                                    </div>
+                                    <h5>Visual Analytics</h5>
+                                    <p class="text-muted">Beautiful, interactive charts and visualizations</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3 class="mb-4">Our Technology</h3>
+                        <p>Market Pulse integrates multiple financial data APIs to provide a comprehensive market analytics platform:</p>
+                        
+                        <div class="row mb-5">
+                            <div class="col-md-6">
+                                <div class="api-card p-3 mb-3" style="background-color: var(--body-bg); border-radius: 10px;">
+                                    <h5><i class="fas fa-dollar-sign me-2 text-success"></i> Alpha Vantage</h5>
+                                    <p class="mb-0 text-muted">Real-time and historical stock data with extensive coverage of global markets.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="api-card p-3 mb-3" style="background-color: var(--body-bg); border-radius: 10px;">
+                                    <h5><i class="far fa-newspaper me-2 text-info"></i> News API</h5>
+                                    <p class="mb-0 text-muted">Comprehensive news coverage from thousands of sources worldwide.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="api-card p-3 mb-3" style="background-color: var(--body-bg); border-radius: 10px;">
+                                    <h5><i class="fas fa-comments me-2 text-warning"></i> Finnhub</h5>
+                                    <p class="mb-0 text-muted">Social sentiment analysis and market buzz metrics.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="api-card p-3" style="background-color: var(--body-bg); border-radius: 10px;">
+                                    <h5><i class="fas fa-robot me-2 text-danger"></i> TextBlob</h5>
+                                    <p class="mb-0 text-muted">Natural Language Processing for news sentiment analysis.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3 class="mb-4">How It Works</h3>
+                        <div class="mb-5">
+                            <div class="workflow-step d-flex align-items-start mb-4">
+                                <div class="step-number me-3">
+                                    <span class="badge rounded-pill bg-primary fs-5 px-3 py-2">1</span>
+                                </div>
+                                <div>
+                                    <h5>Data Collection</h5>
+                                    <p>We fetch real-time stock data, historical prices, company information, and the latest news from multiple APIs.</p>
+                                </div>
+                            </div>
+                            <div class="workflow-step d-flex align-items-start mb-4">
+                                <div class="step-number me-3">
+                                    <span class="badge rounded-pill bg-primary fs-5 px-3 py-2">2</span>
+                                </div>
+                                <div>
+                                    <h5>Sentiment Analysis</h5>
+                                    <p>News articles and social media mentions are processed through our NLP engine to determine market sentiment.</p>
+                                </div>
+                            </div>
+                            <div class="workflow-step d-flex align-items-start mb-4">
+                                <div class="step-number me-3">
+                                    <span class="badge rounded-pill bg-primary fs-5 px-3 py-2">3</span>
+                                </div>
+                                <div>
+                                    <h5>Data Visualization</h5>
+                                    <p>Information is transformed into interactive charts and intuitive metrics for easy understanding.</p>
+                                </div>
+                            </div>
+                            <div class="workflow-step d-flex align-items-start">
+                                <div class="step-number me-3">
+                                    <span class="badge rounded-pill bg-primary fs-5 px-3 py-2">4</span>
+                                </div>
+                                <div>
+                                    <h5>Intelligent Caching</h5>
+                                    <p>Smart caching mechanisms ensure optimal performance while respecting API rate limits.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <a href="/" class="btn btn-primary btn-lg px-5 py-3">
+                                <i class="fas fa-chart-line me-2"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3">
+        <div class="container-fluid px-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <span class="footer-text">Market<span>Pulse</span> - Real-time Stock Analytics</span>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="footer-disclaimer">Data provided for educational purposes only. Not financial advice.</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Initialize animations
+        AOS.init();
+        
+        // Theme toggle functionality
+        document.querySelector('.theme-toggle').addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+        
+        // Initialize theme based on user preference
+        (function() {
+            const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const savedTheme = localStorage.getItem('theme');
+            
+            if (savedTheme === 'dark' || (!savedTheme && prefersDarkScheme)) {
+                document.documentElement.setAttribute('data-bs-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-bs-theme', 'light');
+            }
+        })();
+    </script>
+</body>
+</html>

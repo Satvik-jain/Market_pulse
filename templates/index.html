@@ -1,94 +1,119 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Market Pulse</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>MarketPulse | Real-time Stock Analytics</title>
+    <!-- Bootstrap 5.3 with dark mode support -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ApexCharts for advanced visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <!-- AOS for scroll animations -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <span class="text-primary">Market</span><span class="text-success">Pulse</span>
+    <!-- Top navigation bar -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <div class="logo-icon me-2">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="logo-text">Market<span>Pulse</span></div>
             </a>
-            <div class="collapse navbar-collapse">
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
                         <a class="nav-link active" href="/">Dashboard</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="#news-section">News</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/about">About</a>
                     </li>
                 </ul>
+                
+                <div class="d-flex align-items-center">
+                    <div class="theme-toggle me-3">
+                        <i class="fas fa-sun light-icon"></i>
+                        <i class="fas fa-moon dark-icon"></i>
+                    </div>
+                    <div class="stock-search">
+                        <div class="input-group">
+                            <input type="text" id="ticker-input" class="form-control" placeholder="Enter ticker..." list="popular-tickers">
+                            <datalist id="popular-tickers">
+                                <option value="AAPL">Apple Inc.</option>
+                                <option value="MSFT">Microsoft Corp</option>
+                                <option value="GOOGL">Alphabet Inc.</option>
+                                <option value="AMZN">Amazon</option>
+                                <option value="TSLA">Tesla Inc.</option>
+                                <option value="META">Meta Platforms</option>
+                            </datalist>
+                            <button class="btn search-btn" type="button" id="search-btn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h4>Stock Analysis Dashboard</h4>
-                    </div>
+    <!-- Main content -->
+    <div class="container-fluid px-4 py-4">
+        <!-- Company overview card -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card overview-card" data-aos="fade-up" data-aos-duration="800">
                     <div class="card-body">
-                        <div class="input-group mb-3">
-                            <input type="text" id="ticker-input" class="form-control" placeholder="Enter stock ticker (e.g., AAPL, MSFT)" value="AAPL">
-                            <button class="btn btn-primary" type="button" id="search-btn">Search</button>
-                        </div>
-                        <div class="stock-info mt-3 mb-3">
-                            <h2 id="company-name">Apple Inc. (AAPL)</h2>
-                            <div id="stock-price" class="display-4 mb-2">$150.25</div>
-                            <div id="price-change" class="h5 text-success">+2.35 (1.57%)</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mt-4">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header bg-dark text-white">
-                        <h5>Price History</h5>
-                    </div>
-                    <div class="card-body">
-                        <div>
-                            <canvas id="price-chart" height="300"></canvas>
-                        </div>
-                        <div class="btn-group mt-3">
-                            <button class="btn btn-outline-primary btn-sm time-range" data-range="7">1W</button>
-                            <button class="btn btn-outline-primary btn-sm time-range" data-range="30">1M</button>
-                            <button class="btn btn-outline-primary btn-sm time-range active" data-range="90">3M</button>
-                            <button class="btn btn-outline-primary btn-sm time-range" data-range="180">6M</button>
-                            <button class="btn btn-outline-primary btn-sm time-range" data-range="365">1Y</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header bg-info text-white">
-                        <h5>Sentiment Analysis</h5>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="sentiment-chart" height="180"></canvas>
-                        <div class="mt-3">
-                            <div class="d-flex justify-content-between">
-                                <div>Buzz Score:</div>
-                                <div id="buzz-score">89</div>
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="company-info">
+                                    <div class="company-logo" id="company-logo">
+                                        <i class="fab fa-apple"></i>
+                                    </div>
+                                    <div class="company-details">
+                                        <h2 id="company-name">Apple Inc. (AAPL)</h2>
+                                        <div class="company-meta">
+                                            <span class="sector"><i class="fas fa-industry"></i> <span id="company-sector">Technology</span></span>
+                                            <span class="exchange"><i class="fas fa-building"></i> <span id="company-exchange">NASDAQ</span></span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="d-flex justify-content-between">
-                                <div>Bullish Sentiment:</div>
-                                <div id="bullish-score">65%</div>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <div>Sector Average:</div>
-                                <div id="sector-score">58%</div>
+                            <div class="col-md-6">
+                                <div class="stock-metrics text-md-end">
+                                    <div class="current-price">
+                                        <span id="stock-price" class="price">$150.25</span>
+                                        <span id="price-change" class="change positive">+2.35 (1.57%)</span>
+                                    </div>
+                                    <div class="trading-metrics">
+                                        <div class="metric">
+                                            <span class="metric-label">Vol:</span>
+                                            <span id="volume" class="metric-value">32.5M</span>
+                                        </div>
+                                        <div class="metric">
+                                            <span class="metric-label">P/E:</span>
+                                            <span id="pe-ratio" class="metric-value">28.5</span>
+                                        </div>
+                                        <div class="metric">
+                                            <span class="metric-label">Mkt Cap:</span>
+                                            <span id="market-cap" class="metric-value">$2.45T</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -96,14 +121,152 @@
             </div>
         </div>
 
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h5>Recent News & Sentiment</h5>
+        <!-- Charts and metrics -->
+        <div class="row mb-4">
+            <!-- Main chart column -->
+            <div class="col-lg-8">
+                <div class="card chart-card" data-aos="fade-up" data-aos-duration="1000">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-chart-area me-2"></i>Price History</h5>
+                            <div class="chart-controls">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm time-range" data-range="7">1W</button>
+                                    <button type="button" class="btn btn-sm time-range" data-range="30">1M</button>
+                                    <button type="button" class="btn btn-sm time-range active" data-range="90">3M</button>
+                                    <button type="button" class="btn btn-sm time-range" data-range="180">6M</button>
+                                    <button type="button" class="btn btn-sm time-range" data-range="365">1Y</button>
+                                </div>
+                                <div class="chart-type-selector ms-2">
+                                    <button class="btn btn-sm chart-type active" data-type="line">
+                                        <i class="fas fa-chart-line"></i>
+                                    </button>
+                                    <button class="btn btn-sm chart-type" data-type="candle">
+                                        <i class="fas fa-chart-bar"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="price-chart"></div>
+                        <div class="chart-overlay loading-overlay">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sentiment and metrics column -->
+            <div class="col-lg-4">
+                <!-- Sentiment Analysis Card -->
+                <div class="card sentiment-card mb-4" data-aos="fade-left" data-aos-duration="1000" data-aos-delay="200">
+                    <div class="card-header">
+                        <h5><i class="fas fa-brain me-2"></i>Sentiment Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="sentiment-chart"></div>
+                        <div class="sentiment-metrics">
+                            <div class="metric-row">
+                                <div class="metric-label">Buzz Score</div>
+                                <div class="progress" style="height: 8px;">
+                                    <div id="buzz-score-bar" class="progress-bar" role="progressbar" style="width: 89%"></div>
+                                </div>
+                                <div class="metric-value" id="buzz-score">89</div>
+                            </div>
+                            <div class="metric-row">
+                                <div class="metric-label">Bullish Sentiment</div>
+                                <div class="progress" style="height: 8px;">
+                                    <div id="bullish-score-bar" class="progress-bar" role="progressbar" style="width: 65%"></div>
+                                </div>
+                                <div class="metric-value" id="bullish-score">65%</div>
+                            </div>
+                            <div class="metric-row">
+                                <div class="metric-label">Sector Average</div>
+                                <div class="progress" style="height: 8px;">
+                                    <div id="sector-score-bar" class="progress-bar" role="progressbar" style="width: 58%"></div>
+                                </div>
+                                <div class="metric-value" id="sector-score">58%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Key Metrics Card -->
+                <div class="card metrics-card" data-aos="fade-left" data-aos-duration="1000" data-aos-delay="300">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tachometer-alt me-2"></i>Key Metrics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row metrics-grid">
+                            <div class="col-6">
+                                <div class="metric-box">
+                                    <div class="metric-title">52W High</div>
+                                    <div class="metric-value" id="year-high">$182.94</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="metric-box">
+                                    <div class="metric-title">52W Low</div>
+                                    <div class="metric-value" id="year-low">$124.17</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="metric-box">
+                                    <div class="metric-title">Avg Volume</div>
+                                    <div class="metric-value" id="avg-volume">29.8M</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="metric-box">
+                                    <div class="metric-title">Dividend</div>
+                                    <div class="metric-value" id="dividend">0.92 (0.61%)</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="metric-box">
+                                    <div class="metric-title">Beta</div>
+                                    <div class="metric-value" id="beta">1.28</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="metric-box">
+                                    <div class="metric-title">EPS</div>
+                                    <div class="metric-value" id="eps">$5.28</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- News Section -->
+        <div class="row" id="news-section">
+            <div class="col-12">
+                <div class="card news-card" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5><i class="far fa-newspaper me-2"></i>Latest News & Analysis</h5>
+                            <div class="news-filter">
+                                <select class="form-select form-select-sm" id="news-filter">
+                                    <option value="all">All News</option>
+                                    <option value="positive">Positive</option>
+                                    <option value="negative">Negative</option>
+                                    <option value="neutral">Neutral</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div id="news-container" class="news-container">
+                            <div class="news-loading">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading news...</span>
+                                </div>
+                            </div>
                             <!-- News items will be loaded here dynamically -->
                         </div>
                     </div>
@@ -112,9 +275,29 @@
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3">
+        <div class="container-fluid px-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <span class="footer-text">Market<span>Pulse</span> - Real-time Stock Analytics</span>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="footer-disclaimer">Data provided for educational purposes only. Not financial advice.</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <script>
+        // Initialize animations
+        AOS.init();
+    </script>
 </body>
 </html>
