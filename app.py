@@ -6,6 +6,9 @@ import json
 import datetime
 from textblob import TextBlob
 import pandas as pd
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -14,9 +17,9 @@ cache = {}
 cache_duration = 300  # 5 minutes
 
 # API keys (in a real project, store these securely)
-ALPHAVANTAGE_API_KEY = "ORRBTEBWNMRKM9JY"  
-NEWS_API_KEY = "86faaf4a4ee8490cade873e97b4721d3"
-FINNHUB_API_KEY = "d1k2a31r01ql1h3a7gjgd1k2a31r01ql1h3a7gk0"
+ALPHAVANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY")
+NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
 
 @app.route('/')
 def index():
