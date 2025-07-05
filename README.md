@@ -6,26 +6,21 @@
 
 MarketPulse is a comprehensive stock analytics platform that combines real-time market data with AI-driven sentiment analysis to provide investors with powerful insights. Featuring interactive visualizations, news sentiment scoring, and technical indicators, MarketPulse helps users make more informed investment decisions.
 
-[![Stars](https://img.shields.io/github/stars/yourusername/marketpulse?style=social)](https://github.com/yourusername/marketpulse)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/flask-2.0%2B-green)](https://flask.palletsprojects.com/)
-
 ---
 
 ## 📋 Table of Contents
 
-- [Demo](#demo)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Installation](#installation)
-- [Usage Guide](#usage-guide)
-- [API Documentation](#api-documentation)
-- [Project Structure](#project-structure)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
-- [Contact](#contact)
+- [Demo](##demo)
+- [Features](##features)
+- [Tech Stack](##tech-stack)
+- [Installation](##installation)
+- [Usage Guide](##usage-guide)
+- [API Documentation](##api-documentation)
+- [Project Structure](##project-structure)
+- [Contributing](##contributing)
+- [License](##license)
+- [Acknowledgments](##acknowledgments)
+- [Contact](##contact)
 
 ---
 
