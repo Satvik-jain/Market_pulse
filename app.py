@@ -35,6 +35,7 @@ NEWS_API_KEY = os.environ.get("NEWS_API_KEY", "86faaf4a4ee8490cade873e97b4721d3"
 
 # Define helper functions first
 def generate_mock_stock_data(ticker, days=365):
+    return
     """
     Generate realistic mock stock data for demo purposes
     
@@ -55,6 +56,7 @@ def generate_mock_stock_data(ticker, days=365):
         'TSLA': 237.49,
         'META': 313.75
     }
+
     base_price = base_prices.get(ticker, 100.0)  # Default to 100 for unknown tickers
     volatility = 0.02  # 2% daily volatility
     
@@ -77,6 +79,7 @@ def generate_mock_stock_data(ticker, days=365):
             close_price = base_price
         else:
             # Use previous day's close as reference
+            print(data)
             prev_close = data[-1]['close']
             open_price = prev_close * (1 + random.normalvariate(0, volatility/3))
             close_price = prev_close * (1 + change_percent)
@@ -429,7 +432,7 @@ def get_stock_data():
         # Get historical data using yfinance
         stock = yf.Ticker(ticker)
         hist = stock.history(period="1y")  # Get data for 1 year
-        
+        # print(hist)
         if not hist.empty:
             # Process the data for charting
             processed_data = []
@@ -442,13 +445,14 @@ def get_stock_data():
                     'close': round(float(row['Close']), 2),
                     'volume': int(row['Volume'])
                 })
+                # print(processed_data[0])
         else:
             # If no data from Yahoo Finance, try Alpha Vantage as backup
             logger.info(f"No data from Yahoo Finance for {ticker}, trying Alpha Vantage")
             url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={ticker}&apikey={ALPHAVANTAGE_API_KEY}"
             response = requests.get(url, timeout=5)
             stock_data = response.json()
-            
+            print(stock_data)
             # Process the data for charting
             processed_data = []
             if 'Time Series (Daily)' in stock_data:

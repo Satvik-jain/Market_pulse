@@ -1147,7 +1147,7 @@ function initAccessibility() {
             textToSpeechEnabled = this.checked;
             if (this.checked) {
                 synthesis = window.speechSynthesis;
-                speak("Text to speech enabled");
+                speak("Speech Toggle");
             } else {
                 if (synthesis) {
                     synthesis.cancel();
