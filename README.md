@@ -1,4 +1,3 @@
-```markdown
 # Market Pulse: Real-time Stock Analytics Platform
 
 Market Pulse is an advanced financial analytics dashboard that combines real-time stock data, news sentiment analysis, and interactive visualizations to provide investors with comprehensive market insights in an elegant, user-friendly interface.
@@ -109,7 +108,6 @@ Open your browser and navigate to `http://127.0.0.1:5000`
 ### Searching for Stocks
 Enter a stock ticker symbol (e.g., AAPL, MSFT, GOOGL) in the search box and press Enter or click the search button.
 
-![Search Functionality](screenshots/search_feature.png)
 
 ### Analyzing Stock Data
 - Use the time range buttons (1W, 1M, 3M, 6M, 1Y) to adjust the chart period
