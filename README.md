@@ -1,6 +1,6 @@
 # MarketPulse - Advanced Stock Analytics Platform
 
-![MarketPulse Logo Placeholder](placeholder_for_logo.png)
+![MarketPulse Logo Placeholder](screenshots/placeholder_for_logo.png)
 
 ## 📊 Real-time Stock Analytics with AI-Powered Insights
 
@@ -8,33 +8,16 @@ MarketPulse is a comprehensive stock analytics platform that combines real-time 
 
 ---
 
-## 📋 Table of Contents
-
-- [Demo](##demo)
-- [Features](##features)
-- [Tech Stack](##tech-stack)
-- [Installation](##installation)
-- [Usage Guide](##usage-guide)
-- [API Documentation](##api-documentation)
-- [Project Structure](##project-structure)
-- [Contributing](##contributing)
-- [License](##license)
-- [Acknowledgments](##acknowledgments)
-- [Contact](##contact)
-
----
 
 ## 🎮 Demo
 
 ### Dashboard Overview
 
-![Dashboard Overview](placeholder_for_dashboard_screenshot.png)
+![Dashboard Overview](screenshots/placeholder_for_dashboard_screenshot.png)
 
 ### Real-time Analytics
 
-![Analytics Demo](placeholder_for_analytics_demo.gif)
-
-Check out our [live demo](https://your-demo-link.com) to experience the platform in action.
+Check out our [live demo]([https://money-pal.onrender.com/]) to experience the platform in action.
 
 ---
 
@@ -46,7 +29,7 @@ Check out our [live demo](https://your-demo-link.com) to experience the platform
 - Volume analysis and trading indicators
 - Interactive price charts (line and candlestick)
 
-![Stock Data Features](placeholder_for_stock_features.png)
+![Stock Data Features](screenshots/placeholder_for_stock_features.png)
 
 ### 🧠 AI-Powered Sentiment Analysis
 - News sentiment scoring using natural language processing
@@ -54,7 +37,7 @@ Check out our [live demo](https://your-demo-link.com) to experience the platform
 - Sector sentiment comparison
 - Bullish/bearish indicators based on news coverage
 
-![Sentiment Analysis](placeholder_for_sentiment_analysis.png)
+![Sentiment Analysis](screenshots/placeholder_for_sentiment_analysis.png)
 
 ### 📰 News Aggregation
 - Latest news articles related to stocks
@@ -105,10 +88,7 @@ Check out our [live demo](https://your-demo-link.com) to experience the platform
 - **News API** - News aggregation
 - **Yahoo Finance** - Complementary financial data
 
-### DevOps
-- **Docker** - Containerization
-- **GitHub Actions** - CI/CD workflows
-- **Heroku** - Deployment platform
+
 
 ---
 
@@ -121,8 +101,8 @@ Check out our [live demo](https://your-demo-link.com) to experience the platform
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/yourusername/marketpulse.git
-cd marketpulse
+git clone https://github.com/Satvik-jain/Market_pulse
+cd Market_pulse
 ```
 
 ### Step 2: Set Up a Virtual Environment
@@ -154,19 +134,8 @@ PORT=5000
 python app.py
 ```
 
-The application will be available at `http://localhost:5000`.
+The application will be available at `http://127.0.0.1:5000/`.
 
-### Using Docker
-If you prefer using Docker:
-```bash
-# Build the Docker image
-docker build -t marketpulse .
-
-# Run the Docker container
-docker run -p 5000:5000 --env-file .env marketpulse
-```
-
-![Installation Complete](placeholder_for_installation_complete.png)
 
 ---
 
@@ -174,7 +143,7 @@ docker run -p 5000:5000 --env-file .env marketpulse
 
 ### 1. Dashboard Navigation
 
-![Dashboard Navigation](placeholder_for_navigation_guide.png)
+![Dashboard Navigation](screenshots/placeholder_for_navigation_guide.png)
 
 The main dashboard provides a comprehensive overview of your selected stock with the following components:
 - **Search Bar**: Enter a stock ticker (e.g., AAPL, MSFT)
@@ -182,6 +151,7 @@ The main dashboard provides a comprehensive overview of your selected stock with
 - **Key Metrics**: Important financial indicators
 - **News Feed**: Latest relevant news with sentiment indicators
 - **Sentiment Analysis**: AI-powered market sentiment gauge
+- **Speech Navigation**: Use speech to search, analyse and to give commands 
 
 ### 2. Stock Search
 
@@ -191,7 +161,6 @@ To search for a stock:
 3. Press Enter or click the search icon
 4. The dashboard will update with data for your selected stock
 
-![Stock Search](placeholder_for_stock_search.gif)
 
 ### 3. Chart Interaction
 
@@ -202,7 +171,6 @@ The interactive chart supports:
 - **Chart Types**: Toggle between line chart and candlestick views
 - **Fullscreen**: Expand chart to fullscreen mode
 
-![Chart Interaction](placeholder_for_chart_interaction.gif)
 
 ### 4. News and Sentiment Analysis
 
@@ -213,28 +181,25 @@ The news section displays relevant articles with sentiment indicators:
 
 You can filter news by sentiment using the filter buttons above the news feed.
 
-![News Filtering](placeholder_for_news_filtering.gif)
 
 ### 5. Theme Toggle
 
 Toggle between light and dark mode by clicking the sun/moon icon in the navigation bar.
 
-![Theme Toggle](placeholder_for_theme_toggle.gif)
 
 ### 6. Parallel Mode
 
 Compare two stocks side by side:
-1. Click the "Compare" button next to the search bar
+1. Click the "Dual Mode" button next to the search bar
 2. Enter the ticker for the second stock
 3. View both stocks' data simultaneously
 
-![Parallel Mode](placeholder_for_parallel_mode.png)
+![Parallel Mode](screenshots/placeholder_for_parallel_mode.png)
 
 ### 7. Guided Tour
 
 New users will automatically be offered a guided tour. Returning users can access the tour anytime by clicking the Help button.
 
-![Guided Tour](placeholder_for_guided_tour.gif)
 
 ---
 
@@ -322,24 +287,28 @@ MarketPulse provides internal API endpoints for data retrieval and analysis. Her
 ## 📁 Project Structure
 
 ```
-marketpulse/
-├── app.py                # Main Flask application
-├── requirements.txt      # Python dependencies
-├── Dockerfile            # Docker configuration
-├── .env                  # Environment variables (create this)
-├── .gitignore            # Git ignore file
-├── README.md             # This file
-├── static/               # Static assets
-│   ├── css/              # CSS files
-│   │   └── style.css     # Main stylesheet
-│   ├── js/               # JavaScript files
-│   │   ├── main.js       # Main application logic
-│   │   ├── charts.js     # Chart functionality
-│   │   └── animations.js # UI animations
-│   └── img/              # Images and icons
-└── templates/            # HTML templates
-    ├── index.html        # Main dashboard
-    └── about.html        # About page
+📦 Market_pulse
+├─ .gitignore
+├─ README.md
+├─ app.py
+├─ requirements.txt
+├─ screenshots
+│  ├─ dashboard_main.png
+│  ├─ light_mode.png
+│  ├─ news_feed.png
+│  ├─ sentiment_analysis.png
+│  └─ stock_charts.png
+├─ static
+│  ├─ css
+│  │  └─ style.css
+│  ├─ img
+│  │  └─ guide-character.png
+│  └─ js
+│     ├─ charts.js
+│     └─ main.js
+└─ templates
+   ├─ about.html
+   └─ index.html
 ```
 
 ---
@@ -353,8 +322,8 @@ Click the "Fork" button at the top right of this repository.
 
 ### 2. Clone Your Fork
 ```bash
-git clone https://github.com/yourusername/marketpulse.git
-cd marketpulse
+git clone https://github.com/Satvik-jain/Market_pulse.git
+cd Market_pulse
 ```
 
 ### 3. Create a Branch
@@ -365,21 +334,13 @@ git checkout -b feature/your-feature-name
 ### 4. Make Your Changes
 Implement your feature or bug fix.
 
-### 5. Run Tests
-```bash
-# Run linters
-flake8 .
 
-# Run unit tests
-pytest
-```
-
-### 6. Commit Your Changes
+### 5. Commit Your Changes
 ```bash
 git commit -m "Add feature: your feature description"
 ```
 
-### 7. Push to GitHub
+### 6. Push to GitHub
 ```bash
 git push origin feature/your-feature-name
 ```
@@ -397,8 +358,7 @@ Go to your fork on GitHub and click "New pull request".
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
+This project is licensed under the MIT License
 ---
 
 ## 🙏 Acknowledgments
@@ -409,22 +369,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ApexCharts](https://apexcharts.com/) for interactive charts
 - [Bootstrap](https://getbootstrap.com/) for UI components
 - [Font Awesome](https://fontawesome.com/) for icons
-- All contributors who have helped improve MarketPulse
 
 ---
 
 ## 📞 Contact
 
-- **Project Maintainer**: Your Name
-- **Email**: your.email@example.com
-- **Twitter**: [@YourTwitterHandle](https://twitter.com/YourTwitterHandle)
-- **LinkedIn**: [Your LinkedIn](https://www.linkedin.com/in/your-profile/)
+- **Project Maintainer**: Satvik Jain
+- **Email**: satvik.jain.kht@gmail.com
 
 For support requests, please open an issue on this repository or contact the maintainer directly.
 
 ---
 
-![Footer Banner](placeholder_for_footer_banner.png)
 
 **MarketPulse** - Empowering investors with data-driven insights  
-© 2023 MarketPulse Team
+© 2025 MarketPulse Team
