@@ -5,3 +5,5 @@ numpy
 textblob
 gunicorn
 python-dotenv
+finnhub-python
+yfinance

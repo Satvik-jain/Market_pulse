@@ -158,6 +158,20 @@ function initPriceChart(stockData) {
 
     // Initialize ApexCharts
     try {
+        // Check if the price-chart element exists
+        const priceChartEl = document.getElementById('price-chart');
+        if (!priceChartEl) {
+            console.error("Price chart element not found");
+            return;
+        }
+        
+        // Check if ApexCharts is loaded
+        if (typeof ApexCharts === 'undefined') {
+            console.error("ApexCharts library not loaded");
+            fallbackChartInit();
+            return;
+        }
+        
         // If charts already exist, destroy them
         if (window.priceChart) {
             window.priceChart.destroy();
@@ -167,17 +181,16 @@ function initPriceChart(stockData) {
         }
         
         // Create new charts
-        if (typeof ApexCharts !== 'undefined') {
-            window.priceChart = new ApexCharts(document.getElementById('price-chart'), options);
-            window.priceChart.render();
-            
-            // Create but don't render candlestick chart yet
-            window.candleChart = new ApexCharts(document.getElementById('price-chart'), candleOptions);
-        } else {
-            // Fallback to basic chart if ApexCharts is not available
-            console.error("ApexCharts not loaded, using fallback");
-            fallbackChartInit();
-        }
+        window.priceChart = new ApexCharts(priceChartEl, options);
+        window.priceChart.render();
+        
+        // Create but don't render candlestick chart yet
+        window.candleChart = new ApexCharts(priceChartEl, candleOptions);
+        
+        // Set initial time range (default to 90 days)
+        setTimeout(() => {
+            updateChartTimeRange(90);
+        }, 100);
         
         console.log("Chart initialized successfully");
     } catch (error) {
@@ -203,10 +216,16 @@ function fallbackChartInit() {
 // Update chart with selected time range
 function updateChartTimeRange(days) {
     if (!window.stockData || window.stockData.length === 0) {
+        console.warn("No stock data available for chart update");
         return;
     }
     
     try {
+        // Validate days parameter
+        if (!days || isNaN(days)) {
+            days = 90; // Default to 90 days
+        }
+        
         const today = new Date();
         const startDate = new Date();
         startDate.setDate(today.getDate() - days);
@@ -216,6 +235,11 @@ function updateChartTimeRange(days) {
             const dataDate = new Date(d.date);
             return dataDate >= startDate;
         });
+        
+        if (filteredData.length === 0) {
+            console.warn("No data available for selected time range");
+            return;
+        }
         
         // Format data based on chart type
         if (window.chartType === 'line' && window.priceChart) {
@@ -226,6 +250,7 @@ function updateChartTimeRange(days) {
             }));
             
             window.priceChart.updateSeries([{
+                name: 'Price',
                 data: chartData
             }]);
             
@@ -234,6 +259,11 @@ function updateChartTimeRange(days) {
             // Update candlestick data
             updateCandleChartData(days);
         }
+        
+        // Dispatch a custom event for chart updates
+        document.dispatchEvent(new CustomEvent('chartUpdated', {
+            detail: { days: days, dataPoints: filteredData.length }
+        }));
     } catch (error) {
         console.error("Error updating chart:", error);
     }
@@ -242,6 +272,7 @@ function updateChartTimeRange(days) {
 // Update candlestick chart data
 function updateCandleChartData(days) {
     if (!window.stockData || window.stockData.length === 0 || !window.candleChart) {
+        console.warn("Cannot update candle chart - missing data or chart");
         return;
     }
     
@@ -255,6 +286,11 @@ function updateCandleChartData(days) {
             const dataDate = new Date(d.date);
             return dataDate >= startDate;
         });
+        
+        if (filteredData.length === 0) {
+            console.warn("No data available for selected time range");
+            return;
+        }
         
         // Format data for candlestick chart
         const candleData = filteredData.map(d => ({
@@ -268,6 +304,7 @@ function updateCandleChartData(days) {
         }));
         
         window.candleChart.updateSeries([{
+            name: 'Price',
             data: candleData
         }]);
         
@@ -281,36 +318,76 @@ function updateCandleChartData(days) {
 function toggleChartType(type) {
     if (type === window.chartType) return;
     
+    console.log("Toggling chart type to:", type);
+    
     try {
         window.chartType = type;
-        // Hide current chart
-        document.querySelector('.loading-overlay').classList.add('active');
+        
+        // Get the loading overlay
+        const overlay = document.querySelector('.loading-overlay');
+        if (overlay) overlay.classList.add('active');
+        
+        // Get the active time range
+        const activeRange = document.querySelector('.time-range.active');
+        const timeRange = activeRange ? parseInt(activeRange.dataset.range) : 90;
         
         setTimeout(() => {
+            const priceChartEl = document.getElementById('price-chart');
+            if (!priceChartEl) {
+                console.error("Price chart element not found");
+                return;
+            }
+            
             if (type === 'line') {
                 // Switch to line chart
-                if (window.candleChart) window.candleChart.destroy();
+                if (window.candleChart) {
+                    try {
+                        window.candleChart.destroy();
+                    } catch (e) {
+                        console.warn("Error destroying candle chart:", e);
+                    }
+                }
+                
                 if (window.priceChart) {
-                    window.priceChart.render();
-                    updateChartTimeRange(parseInt(document.querySelector('.time-range.active').dataset.range || '90'));
+                    try {
+                        window.priceChart.render();
+                        updateChartTimeRange(timeRange);
+                    } catch (e) {
+                        console.warn("Error rendering price chart:", e);
+                        // Re-initialize price chart if rendering fails
+                        if (window.stockData && window.stockData.length > 0) {
+                            initPriceChart(window.stockData);
+                        }
+                    }
                 }
             } else {
                 // Switch to candlestick chart
-                if (window.priceChart) window.priceChart.destroy();
+                if (window.priceChart) {
+                    try {
+                        window.priceChart.destroy();
+                    } catch (e) {
+                        console.warn("Error destroying price chart:", e);
+                    }
+                }
+                
                 if (window.candleChart) {
-                    window.candleChart.render();
-                    updateCandleChartData(parseInt(document.querySelector('.time-range.active').dataset.range || '90'));
+                    try {
+                        window.candleChart.render();
+                        updateCandleChartData(timeRange);
+                    } catch (e) {
+                        console.warn("Error rendering candle chart:", e);
+                        // Handle failed candlestick chart rendering
+                        fallbackChartInit();
+                    }
                 }
             }
             
             // Remove loading overlay
-            const overlay = document.querySelector('.loading-overlay');
             if (overlay) overlay.classList.remove('active');
-            
-            console.log("Chart type changed to:", type);
         }, 300);
     } catch (error) {
         console.error("Error toggling chart type:", error);
+        // Remove loading overlay in case of error
         const overlay = document.querySelector('.loading-overlay');
         if (overlay) overlay.classList.remove('active');
     }
@@ -318,7 +395,10 @@ function toggleChartType(type) {
 
 // Update chart theme based on current theme
 function updateChartTheme(chart) {
-    if (!chart) return;
+    if (!chart || typeof chart.updateOptions !== 'function') {
+        console.warn("Cannot update theme - invalid chart object");
+        return;
+    }
     
     try {
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
@@ -362,11 +442,28 @@ function updateChartTheme(chart) {
 function updateSentimentChart(bullishSentiment, sectorSentiment) {
     try {
         const sentimentChartElement = document.getElementById('sentiment-chart');
-        if (!sentimentChartElement) return;
+        if (!sentimentChartElement) {
+            console.warn("Sentiment chart element not found");
+            return;
+        }
+        
+        // Check if ApexCharts is loaded
+        if (typeof ApexCharts === 'undefined') {
+            console.error("ApexCharts library not loaded for sentiment chart");
+            fallbackSentimentChart(bullishSentiment, sectorSentiment);
+            return;
+        }
         
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
         const textColor = isDark ? '#d1d5db' : '#6c757d';
         const tooltipTheme = isDark ? 'dark' : 'light';
+        
+        // Get color based on sentiment value
+        const getBullishColor = (value) => {
+            if (value > 60) return '#10b981'; // Green for positive
+            if (value > 40) return '#3b82f6'; // Blue for neutral
+            return '#ef4444'; // Red for negative
+        };
         
         const options = {
             chart: {
@@ -397,7 +494,7 @@ function updateSentimentChart(bullishSentiment, sectorSentiment) {
                     }
                 }
             },
-            colors: ['#3b82f6', '#8b5cf6'],
+            colors: [getBullishColor(bullishSentiment), '#8b5cf6'],
             dataLabels: {
                 enabled: true,
                 formatter: function(val) {
@@ -406,7 +503,7 @@ function updateSentimentChart(bullishSentiment, sectorSentiment) {
                 offsetX: 30,
                 style: {
                     fontSize: '12px',
-                    colors: [textColor]
+                    colors: [isDark ? '#ffffff' : '#000000']
                 }
             },
             stroke: {
@@ -474,25 +571,33 @@ function updateSentimentChart(bullishSentiment, sectorSentiment) {
         }
         
         // Create new chart
-        if (typeof ApexCharts !== 'undefined') {
-            window.sentimentChart = new ApexCharts(document.getElementById('sentiment-chart'), options);
-            window.sentimentChart.render();
-            console.log("Sentiment chart updated with values:", bullishSentiment, sectorSentiment);
-        } else {
-            // Fallback when ApexCharts is not available
-            console.error("ApexCharts not loaded for sentiment chart");
-            const sentimentChart = document.getElementById('sentiment-chart');
-            if (sentimentChart) {
-                sentimentChart.innerHTML = `
-                    <div style="text-align:center; padding:20px;">
-                        <div style="font-weight:bold; margin-bottom:10px;">Bullish Sentiment: ${bullishSentiment}%</div>
-                        <div style="font-weight:bold;">Sector Average: ${sectorSentiment}%</div>
-                    </div>
-                `;
-            }
-        }
+        window.sentimentChart = new ApexCharts(sentimentChartElement, options);
+        window.sentimentChart.render();
+        console.log("Sentiment chart updated with values:", bullishSentiment, sectorSentiment);
     } catch (error) {
         console.error("Error updating sentiment chart:", error);
+        fallbackSentimentChart(bullishSentiment, sectorSentiment);
+    }
+}
+
+// Fallback sentiment chart when ApexCharts fails
+function fallbackSentimentChart(bullishSentiment, sectorSentiment) {
+    const sentimentChart = document.getElementById('sentiment-chart');
+    if (sentimentChart) {
+        sentimentChart.innerHTML = `
+            <div style="text-align:center; padding:20px;">
+                <div style="font-weight:bold; margin-bottom:10px;">Bullish Sentiment: ${bullishSentiment}%</div>
+                <div style="font-weight:bold;">Sector Average: ${sectorSentiment}%</div>
+                <div style="margin-top:15px;">
+                    <div style="height:20px; background:#f0f0f0; border-radius:4px; overflow:hidden; margin-bottom:10px;">
+                        <div style="height:100%; width:${bullishSentiment}%; background:#3b82f6; transition:width 0.5s ease;"></div>
+                    </div>
+                    <div style="height:20px; background:#f0f0f0; border-radius:4px; overflow:hidden;">
+                        <div style="height:100%; width:${sectorSentiment}%; background:#8b5cf6; transition:width 0.5s ease;"></div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 }
 
@@ -500,8 +605,15 @@ function updateSentimentChart(bullishSentiment, sectorSentiment) {
 function updateCompanyInfo(ticker, latestData) {
     try {
         // Check if data is reasonable before processing
+        if (!latestData || latestData.close === undefined) {
+            console.warn("Invalid latest data for ticker:", ticker);
+            showTickerError(ticker);
+            return;
+        }
+        
         if (latestData && (latestData.close > 1000000 || isNaN(parseFloat(latestData.close)))) {
             // Unreasonable values detected - show error
+            console.warn("Unreasonable price data for ticker:", ticker);
             showTickerError(ticker);
             return;
         }
@@ -540,6 +652,11 @@ function updateCompanyInfo(ticker, latestData) {
         updateKeyMetrics(ticker, latestData);
         
         console.log("Company info updated for:", ticker);
+        
+        // Trigger animations for metrics
+        setTimeout(() => {
+            document.dispatchEvent(new CustomEvent('dataLoaded'));
+        }, 100);
     } catch (error) {
         console.error("Error updating company info:", error);
         showTickerError(ticker);
@@ -603,6 +720,42 @@ function updateKeyMetrics(ticker, latestData) {
             dividend: '0%',
             beta: '1.06',
             eps: '$5.80'
+        },
+        'AMZN': {
+            sector: 'Consumer Cyclical',
+            exchange: 'NASDAQ',
+            pe: '41.8',
+            marketCap: '1.85T',
+            yearHigh: '$147.74',
+            yearLow: '$101.15',
+            avgVolume: '32.4M',
+            dividend: '0%',
+            beta: '1.24',
+            eps: '$2.90'
+        },
+        'META': {
+            sector: 'Technology',
+            exchange: 'NASDAQ',
+            pe: '23.6',
+            marketCap: '1.12T',
+            yearHigh: '$326.20',
+            yearLow: '$197.80',
+            avgVolume: '15.7M',
+            dividend: '0%',
+            beta: '1.42',
+            eps: '$13.62'
+        },
+        'TSLA': {
+            sector: 'Automotive',
+            exchange: 'NASDAQ',
+            pe: '47.2',
+            marketCap: '862.5B',
+            yearHigh: '$299.29',
+            yearLow: '$152.31',
+            avgVolume: '42.6M',
+            dividend: '0%',
+            beta: '2.01',
+            eps: '$4.30'
         }
     };
     
@@ -646,9 +799,14 @@ function showTickerError(ticker) {
     if (companyNameElement) companyNameElement.textContent = `Unknown Ticker: ${ticker}`;
     
     // Clear data displays
-    document.getElementById('stock-price').textContent = 'N/A';
-    document.getElementById('price-change').textContent = 'No data available';
-    document.getElementById('price-change').className = 'change';
+    const stockPriceElement = document.getElementById('stock-price');
+    if (stockPriceElement) stockPriceElement.textContent = 'N/A';
+    
+    const priceChangeElement = document.getElementById('price-change');
+    if (priceChangeElement) {
+        priceChangeElement.textContent = 'No data available';
+        priceChangeElement.className = 'change';
+    }
     
     // Show creative error message in chart area
     const chartElement = document.getElementById('price-chart');
@@ -661,10 +819,10 @@ function showTickerError(ticker) {
                 <div class="suggestions">
                     <p>Try one of these popular tickers:</p>
                     <div class="suggestion-buttons">
-                        <button onclick="document.getElementById('ticker-input').value='AAPL';performSearch()">AAPL</button>
-                        <button onclick="document.getElementById('ticker-input').value='MSFT';performSearch()">MSFT</button>
-                        <button onclick="document.getElementById('ticker-input').value='GOOGL';performSearch()">GOOGL</button>
-                        <button onclick="document.getElementById('ticker-input').value='AMZN';performSearch()">AMZN</button>
+                        <button onclick="useTickerSuggestion('AAPL')">AAPL</button>
+                        <button onclick="useTickerSuggestion('MSFT')">MSFT</button>
+                        <button onclick="useTickerSuggestion('GOOGL')">GOOGL</button>
+                        <button onclick="useTickerSuggestion('AMZN')">AMZN</button>
                     </div>
                 </div>
             </div>
@@ -675,6 +833,34 @@ function showTickerError(ticker) {
     const newsContainer = document.getElementById('news-container');
     if (newsContainer) {
         newsContainer.innerHTML = '<div class="no-news">No news found for this ticker.</div>';
+    }
+    
+    // Clear sentiment chart
+    const sentimentChartElement = document.getElementById('sentiment-chart');
+    if (sentimentChartElement) {
+        sentimentChartElement.innerHTML = `
+            <div class="no-sentiment">
+                <i class="fas fa-chart-bar"></i>
+                <p>No sentiment data available</p>
+            </div>
+        `;
+    }
+}
+
+// Helper function for ticker suggestions (used in error messages)
+function useTickerSuggestion(ticker) {
+    const tickerInput = document.getElementById('ticker-input');
+    if (tickerInput) {
+        tickerInput.value = ticker;
+        // Check if performSearch function exists
+        if (typeof performSearch === 'function') {
+            performSearch();
+        } else {
+            console.warn("performSearch function not found");
+            // Fallback: try to trigger the search button click
+            const searchBtn = document.getElementById('search-btn');
+            if (searchBtn) searchBtn.click();
+        }
     }
 }
 
@@ -756,7 +942,10 @@ function formatNumber(num) {
 function displayNews(newsItems) {
     try {
         const newsContainer = document.getElementById('news-container');
-        if (!newsContainer) return;
+        if (!newsContainer) {
+            console.warn("News container element not found");
+            return;
+        }
         
         newsContainer.innerHTML = '';
         
@@ -769,24 +958,37 @@ function displayNews(newsItems) {
         window.allNewsItems = newsItems;
         
         newsItems.forEach((news, index) => {
-            const newsDate = new Date(news.publishedAt);
+            // Handle null or undefined publishedAt
+            const newsDate = news.publishedAt ? new Date(news.publishedAt) : new Date();
             
             // Determine sentiment class and icon
             let sentimentClass = 'sentiment-neutral';
             let sentimentIcon = 'fas fa-minus';
             
-            if (news.sentiment > 0.1) {
-                sentimentClass = 'sentiment-positive';
+            // Use sentiment_label if available, otherwise calculate from sentiment value
+            if (news.sentiment_label) {
+                sentimentClass = `sentiment-${news.sentiment_label}`;
+            } else if (news.sentiment !== undefined) {
+                if (news.sentiment > 0.1) {
+                    sentimentClass = 'sentiment-positive';
+                    sentimentIcon = 'fas fa-arrow-up';
+                } else if (news.sentiment < -0.1) {
+                    sentimentClass = 'sentiment-negative';
+                    sentimentIcon = 'fas fa-arrow-down';
+                }
+            }
+            
+            // Set icon based on sentiment class
+            if (sentimentClass === 'sentiment-positive') {
                 sentimentIcon = 'fas fa-arrow-up';
-            } else if (news.sentiment < -0.1) {
-                sentimentClass = 'sentiment-negative';
+            } else if (sentimentClass === 'sentiment-negative') {
                 sentimentIcon = 'fas fa-arrow-down';
             }
             
             // Create news element with animation delay
             const newsElement = document.createElement('div');
             newsElement.className = 'news-item';
-            newsElement.dataset.sentiment = news.sentiment_label;
+            newsElement.dataset.sentiment = news.sentiment_label || 'neutral';
             newsElement.style.animationDelay = `${index * 0.1}s`;
             
             newsElement.innerHTML = `
@@ -794,9 +996,9 @@ function displayNews(newsItems) {
                     <i class="${sentimentIcon}"></i>
                 </div>
                 <div class="news-content">
-                    <a href="${news.url}" target="_blank" class="news-title">${news.title}</a>
+                    <a href="${news.url || '#'}" target="_blank" class="news-title">${news.title}</a>
                     <div class="news-meta">
-                        <div class="news-source">${news.source}</div>
+                        <div class="news-source">${news.source || 'Unknown Source'}</div>
                         <div class="news-date">${newsDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
                     </div>
                 </div>
@@ -806,6 +1008,9 @@ function displayNews(newsItems) {
         });
         
         console.log("News displayed:", newsItems.length, "items");
+        
+        // Dispatch custom event when news is displayed
+        document.dispatchEvent(new CustomEvent('newsDisplayed'));
     } catch (error) {
         console.error("Error displaying news:", error);
     }
@@ -813,11 +1018,17 @@ function displayNews(newsItems) {
 
 // Filter news by sentiment
 function filterNewsBySentiment(sentiment) {
-    if (!window.allNewsItems) return;
+    if (!window.allNewsItems) {
+        console.warn("No news items available for filtering");
+        return;
+    }
     
     try {
         const newsContainer = document.getElementById('news-container');
-        if (!newsContainer) return;
+        if (!newsContainer) {
+            console.warn("News container element not found");
+            return;
+        }
         
         newsContainer.innerHTML = '';
         
@@ -825,7 +1036,21 @@ function filterNewsBySentiment(sentiment) {
         
         // Filter news items by sentiment if not "all"
         if (sentiment !== 'all') {
-            filteredNews = window.allNewsItems.filter(news => news.sentiment_label === sentiment);
+            filteredNews = window.allNewsItems.filter(news => {
+                // Match by sentiment_label or calculated sentiment
+                if (news.sentiment_label) {
+                    return news.sentiment_label === sentiment;
+                } else if (news.sentiment !== undefined) {
+                    if (sentiment === 'positive') {
+                        return news.sentiment > 0.1;
+                    } else if (sentiment === 'negative') {
+                        return news.sentiment < -0.1;
+                    } else {
+                        return news.sentiment >= -0.1 && news.sentiment <= 0.1;
+                    }
+                }
+                return false;
+            });
         }
         
         if (filteredNews.length === 0) {
@@ -835,24 +1060,36 @@ function filterNewsBySentiment(sentiment) {
         
         // Display filtered news
         filteredNews.forEach((news, index) => {
-            const newsDate = new Date(news.publishedAt);
+            const newsDate = news.publishedAt ? new Date(news.publishedAt) : new Date();
             
             // Determine sentiment class and icon
             let sentimentClass = 'sentiment-neutral';
             let sentimentIcon = 'fas fa-minus';
             
-            if (news.sentiment > 0.1) {
-                sentimentClass = 'sentiment-positive';
+            // Use sentiment_label if available, otherwise calculate from sentiment value
+            if (news.sentiment_label) {
+                sentimentClass = `sentiment-${news.sentiment_label}`;
+            } else if (news.sentiment !== undefined) {
+                if (news.sentiment > 0.1) {
+                    sentimentClass = 'sentiment-positive';
+                    sentimentIcon = 'fas fa-arrow-up';
+                } else if (news.sentiment < -0.1) {
+                    sentimentClass = 'sentiment-negative';
+                    sentimentIcon = 'fas fa-arrow-down';
+                }
+            }
+            
+            // Set icon based on sentiment class
+            if (sentimentClass === 'sentiment-positive') {
                 sentimentIcon = 'fas fa-arrow-up';
-            } else if (news.sentiment < -0.1) {
-                sentimentClass = 'sentiment-negative';
+            } else if (sentimentClass === 'sentiment-negative') {
                 sentimentIcon = 'fas fa-arrow-down';
             }
             
             // Create news element with animation delay
             const newsElement = document.createElement('div');
             newsElement.className = 'news-item';
-            newsElement.dataset.sentiment = news.sentiment_label;
+            newsElement.dataset.sentiment = news.sentiment_label || 'neutral';
             newsElement.style.animationDelay = `${index * 0.1}s`;
             
             newsElement.innerHTML = `
@@ -860,9 +1097,9 @@ function filterNewsBySentiment(sentiment) {
                     <i class="${sentimentIcon}"></i>
                 </div>
                 <div class="news-content">
-                    <a href="${news.url}" target="_blank" class="news-title">${news.title}</a>
+                    <a href="${news.url || '#'}" target="_blank" class="news-title">${news.title}</a>
                     <div class="news-meta">
-                        <div class="news-source">${news.source}</div>
+                        <div class="news-source">${news.source || 'Unknown Source'}</div>
                         <div class="news-date">${newsDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
                     </div>
                 </div>
@@ -872,7 +1109,104 @@ function filterNewsBySentiment(sentiment) {
         });
         
         console.log("News filtered by sentiment:", sentiment);
+        
+        // Dispatch custom event when news is displayed after filtering
+        document.dispatchEvent(new CustomEvent('newsDisplayed'));
     } catch (error) {
         console.error("Error filtering news:", error);
     }
 }
+
+// Listen for language changes to update charts
+document.addEventListener('languageChanged', function(e) {
+    const lang = e.detail.language;
+    console.log("Language changed to:", lang, "- updating charts");
+    
+    // Update chart labels if they exist
+    if (window.priceChart) {
+        updateChartLabels(window.priceChart, lang);
+    }
+    
+    if (window.candleChart) {
+        updateChartLabels(window.candleChart, lang);
+    }
+    
+    if (window.sentimentChart) {
+        updateSentimentLabels(window.sentimentChart, lang);
+    }
+});
+
+// Update chart labels based on language
+function updateChartLabels(chart, lang) {
+    if (!chart || typeof chart.updateOptions !== 'function') return;
+    
+    const translations = {
+        'en': {
+            'price': 'Price',
+            'date': 'Date',
+            'open': 'Open',
+            'high': 'High',
+            'low': 'Low',
+            'close': 'Close'
+        },
+        'es': {
+            'price': 'Precio',
+            'date': 'Fecha',
+            'open': 'Apertura',
+            'high': 'Máximo',
+            'low': 'Mínimo',
+            'close': 'Cierre'
+        }
+        // Add more languages as needed
+    };
+    
+    const t = translations[lang] || translations['en'];
+    
+    chart.updateOptions({
+        series: [{
+            name: t.price
+        }]
+    });
+}
+
+// Update sentiment chart labels based on language
+function updateSentimentLabels(chart, lang) {
+    if (!chart || typeof chart.updateOptions !== 'function') return;
+    
+    const translations = {
+        'en': {
+            'sentiment': 'Sentiment',
+            'stock': 'Stock',
+            'sector': 'Sector Average'
+        },
+        'es': {
+            'sentiment': 'Sentimiento',
+            'stock': 'Acción',
+            'sector': 'Promedio del Sector'
+        }
+        // Add more languages as needed
+    };
+    
+    const t = translations[lang] || translations['en'];
+    
+    chart.updateOptions({
+        series: [{
+            name: t.sentiment
+        }],
+        xaxis: {
+            categories: [t.stock, t.sector]
+        }
+    });
+}
+
+// Execute on page load to ensure charts are properly initialized
+document.addEventListener('DOMContentLoaded', function() {
+    // Apply any existing theme immediately to charts
+    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    console.log("Initial theme is:", isDark ? 'dark' : 'light');
+    
+    // Ensure all charts use the correct theme
+    if (window.priceChart) updateChartTheme(window.priceChart);
+    if (window.candleChart) updateChartTheme(window.candleChart);
+    if (window.sentimentChart) updateChartTheme(window.sentimentChart);
+});

@@ -10,6 +10,7 @@ import pandas as pd
 import time
 import logging
 import re
+import yfinance as yf  # Add Yahoo Finance library
 
 app = Flask(__name__)
 
@@ -30,7 +31,7 @@ last_cleanup = datetime.datetime.now()
 # In production, these should be stored as environment variables
 ALPHAVANTAGE_API_KEY = os.environ.get("ALPHAVANTAGE_API_KEY", "ORRBTEBWNMRKM9JY")
 NEWS_API_KEY = os.environ.get("NEWS_API_KEY", "86faaf4a4ee8490cade873e97b4721d3")
-FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY", "d1k2a31r01ql1h3a7gjgd1k2a31r01ql1h3a7gk0")
+# Removed Finnhub API key and client
 
 # Define helper functions first
 def generate_mock_stock_data(ticker, days=365):
@@ -422,31 +423,51 @@ def get_stock_data():
         return jsonify(cache[cache_key]['data'])
     
     try:
-        # Try to get real data from Alpha Vantage
-        logger.info(f"Fetching stock data for {ticker} from Alpha Vantage")
-        url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={ticker}&apikey={ALPHAVANTAGE_API_KEY}"
-        response = requests.get(url, timeout=5)
-        stock_data = response.json()
+        # Try to get data from Yahoo Finance
+        logger.info(f"Fetching stock data for {ticker} from Yahoo Finance")
         
-        # Process the data for charting
-        processed_data = []
-        if 'Time Series (Daily)' in stock_data:
-            time_series = stock_data['Time Series (Daily)']
-            for date, values in time_series.items():
+        # Get historical data using yfinance
+        stock = yf.Ticker(ticker)
+        hist = stock.history(period="1y")  # Get data for 1 year
+        
+        if not hist.empty:
+            # Process the data for charting
+            processed_data = []
+            for date, row in hist.iterrows():
                 processed_data.append({
-                    'date': date,
-                    'open': float(values['1. open']),
-                    'high': float(values['2. high']),
-                    'low': float(values['3. low']),
-                    'close': float(values['4. close']),
-                    'volume': int(values['5. volume'])
+                    'date': date.strftime('%Y-%m-%d'),
+                    'open': round(float(row['Open']), 2),
+                    'high': round(float(row['High']), 2),
+                    'low': round(float(row['Low']), 2),
+                    'close': round(float(row['Close']), 2),
+                    'volume': int(row['Volume'])
                 })
-            
-            # Sort by date
-            processed_data.sort(key=lambda x: x['date'])
         else:
-            # If API call fails or no data, use mock data
-            raise Exception("No data from API")
+            # If no data from Yahoo Finance, try Alpha Vantage as backup
+            logger.info(f"No data from Yahoo Finance for {ticker}, trying Alpha Vantage")
+            url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={ticker}&apikey={ALPHAVANTAGE_API_KEY}"
+            response = requests.get(url, timeout=5)
+            stock_data = response.json()
+            
+            # Process the data for charting
+            processed_data = []
+            if 'Time Series (Daily)' in stock_data:
+                time_series = stock_data['Time Series (Daily)']
+                for date, values in time_series.items():
+                    processed_data.append({
+                        'date': date,
+                        'open': float(values['1. open']),
+                        'high': float(values['2. high']),
+                        'low': float(values['3. low']),
+                        'close': float(values['4. close']),
+                        'volume': int(values['5. volume'])
+                    })
+                
+                # Sort by date
+                processed_data.sort(key=lambda x: x['date'])
+            else:
+                # If API call fails or no data, use mock data
+                raise Exception("No data from APIs")
             
     except Exception as e:
         logger.warning(f"Error fetching stock data: {e}, falling back to mock data")
@@ -485,34 +506,56 @@ def get_company_news():
         return jsonify(cache[cache_key]['data'])
     
     try:
-        # Try to get real data from News API
-        company_name = get_company_name(ticker)
-        logger.info(f"Fetching news for {ticker} ({company_name}) from News API")
-        url = f"https://newsapi.org/v2/everything?q={company_name}&apiKey={NEWS_API_KEY}&pageSize=10"
-        response = requests.get(url, timeout=5)
-        news_data = response.json()
+        # Try to get news from Yahoo Finance first
+        logger.info(f"Fetching news for {ticker} from Yahoo Finance")
+        stock = yf.Ticker(ticker)
+        news_data = stock.news
         
         # Process news and analyze sentiment
         articles = []
-        if 'articles' in news_data and len(news_data['articles']) > 0:
-            for article in news_data['articles'][:10]:  # Limit to 10 articles
+        if news_data and len(news_data) > 0:
+            for article in news_data[:10]:  # Limit to 10 articles
                 # Skip articles with missing data
-                if not article.get('title') or not article.get('source'):
+                if not article.get('title'):
                     continue
                 
-                sentiment = analyze_sentiment(article['title'] + " " + (article.get('description') or ""))
+                sentiment = analyze_sentiment(article['title'])
                 articles.append({
                     'title': article['title'],
-                    'source': article['source']['name'],
-                    'url': article['url'],
-                    'publishedAt': article['publishedAt'],
+                    'source': article.get('publisher', 'Yahoo Finance'),
+                    'url': article.get('link', '#'),
+                    'publishedAt': datetime.datetime.fromtimestamp(article.get('providerPublishTime', time.time())).isoformat(),
                     'sentiment': sentiment['polarity'],
                     'sentiment_label': sentiment['label']
                 })
         
+        # If no articles from Yahoo Finance, try News API
         if not articles:
-            # If API call returns no usable articles
-            raise Exception("No usable news data from API")
+            company_name = get_company_name(ticker)
+            logger.info(f"No news from Yahoo Finance for {ticker}, trying News API")
+            url = f"https://newsapi.org/v2/everything?q={company_name}&apiKey={NEWS_API_KEY}&pageSize=10"
+            response = requests.get(url, timeout=5)
+            news_data = response.json()
+            
+            if 'articles' in news_data and len(news_data['articles']) > 0:
+                for article in news_data['articles'][:10]:  # Limit to 10 articles
+                    # Skip articles with missing data
+                    if not article.get('title') or not article.get('source'):
+                        continue
+                    
+                    sentiment = analyze_sentiment(article['title'] + " " + (article.get('description') or ""))
+                    articles.append({
+                        'title': article['title'],
+                        'source': article['source']['name'],
+                        'url': article['url'],
+                        'publishedAt': article['publishedAt'],
+                        'sentiment': sentiment['polarity'],
+                        'sentiment_label': sentiment['label']
+                    })
+        
+        if not articles:
+            # If API calls return no usable articles
+            raise Exception("No usable news data from APIs")
             
     except Exception as e:
         logger.warning(f"Error fetching news: {e}, falling back to mock data")
@@ -542,22 +585,19 @@ def validate_ticker_endpoint():
     if not validate_ticker(ticker):
         return jsonify({'valid': False, 'ticker': ticker}), 400
     
-    # List of known valid tickers
+    # Check if it's in our known tickers or try to validate via Yahoo Finance
     valid_tickers = set(['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'NFLX', 'PYPL', 'INTC'])
-    
-    # Check if it's in our known tickers or try to validate via API
     is_valid = ticker in valid_tickers
     
     if not is_valid:
         try:
-            # Try to get a real quote (very lightweight check)
-            logger.info(f"Validating ticker {ticker} with Alpha Vantage")
-            url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={ticker}&apikey={ALPHAVANTAGE_API_KEY}"
-            response = requests.get(url, timeout=3)
-            data = response.json()
+            # Try to get a real quote using yfinance
+            logger.info(f"Validating ticker {ticker} with Yahoo Finance")
+            stock = yf.Ticker(ticker)
+            info = stock.info
             
-            # If we got actual price data, it's valid
-            is_valid = '01. symbol' in data.get('Global Quote', {})
+            # If we can get info, the ticker is valid
+            is_valid = 'symbol' in info
         except Exception as e:
             logger.warning(f"Error validating ticker {ticker}: {e}")
             is_valid = False
@@ -569,7 +609,7 @@ def validate_ticker_endpoint():
 
 @app.route('/api/stock_sentiment', methods=['GET'])
 def get_stock_sentiment():
-    """API endpoint to get stock sentiment analysis"""
+    """API endpoint to get stock sentiment analysis using Yahoo Finance"""
     # Clean cache periodically
     clean_cache()
     
@@ -587,22 +627,40 @@ def get_stock_sentiment():
         return jsonify(cache[cache_key]['data'])
     
     try:
-        # Try to get real data from Finnhub
-        logger.info(f"Fetching sentiment for {ticker} from Finnhub")
-        url = f"https://finnhub.io/api/v1/news-sentiment?symbol={ticker}&token={FINNHUB_API_KEY}"
-        response = requests.get(url, timeout=5)
-        sentiment_data = response.json()
+        # Use yfinance to get news and calculate sentiment
+        logger.info(f"Fetching news and calculating sentiment for {ticker} using Yahoo Finance")
         
-        # Process sentiment data
-        if 'sentiment' in sentiment_data:
-            result = {
-                'buzz': sentiment_data.get('buzz', {}).get('buzz', 0),
-                'sentiment_score': sentiment_data.get('sentiment', {}).get('bullishPercent', 0),
-                'sector_sentiment': sentiment_data.get('sectorAverageBullishPercent', 0)
-            }
+        # Get stock info and news
+        stock = yf.Ticker(ticker)
+        news_items = stock.news
+        
+        if news_items and len(news_items) > 0:
+            # Calculate sentiment scores from news titles
+            sentiments = []
+            for item in news_items:
+                title = item.get('title', '')
+                if title:
+                    sentiment = analyze_sentiment(title)
+                    sentiments.append(sentiment['polarity'])
+            
+            # Calculate sentiment metrics
+            if sentiments:
+                avg_sentiment = sum(sentiments) / len(sentiments)
+                # Normalize to a 0-1 scale (from -1 to 1)
+                normalized_sentiment = (avg_sentiment + 1) / 2
+                
+                # Calculate buzz based on number of news items (normalized to 0-1)
+                buzz = min(1.0, len(news_items) / 20)  # Normalize, max at 20 news items
+                
+                result = {
+                    'buzz': round(buzz, 2),
+                    'sentiment_score': round(normalized_sentiment, 2),
+                    'sector_sentiment': 0.5  # Default value as sector data isn't readily available
+                }
+            else:
+                raise Exception("No sentiment could be calculated from news")
         else:
-            # If API call fails or no data, use mock data
-            raise Exception("No sentiment data from API")
+            raise Exception("No news data available")
             
     except Exception as e:
         logger.warning(f"Error fetching sentiment: {e}, falling back to mock data")

@@ -13,6 +13,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize theme
     initTheme();
     
+    // Initialize tour elements
+    createTourElements();
+    
+    // Initialize language system
+    initLanguageSystem();
+    
+    // Initialize accessibility features
+    initAccessibility();
+    
     // Default ticker
     let currentTicker = 'AAPL';
     
@@ -125,10 +134,59 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // Initialize story mode
+    initStoryMode();
+    
+    // Initialize parallel mode
+    initParallelMode();
+    
+    // Initialize text-to-speech
+    initTextToSpeech();
 });
 
+// Add color blindness filters to the DOM
+function addColorBlindnessFilters() {
+    if (!document.getElementById('colorblind-filters')) {
+        const filtersSvg = document.createElement('svg');
+        filtersSvg.id = 'colorblind-filters';
+        filtersSvg.style.display = 'none';
+        
+        filtersSvg.innerHTML = `
+            <filter id="protanopia-filter">
+                <feColorMatrix
+                    in="SourceGraphic"
+                    type="matrix"
+                    values="0.567, 0.433, 0,     0, 0
+                            0.558, 0.442, 0,     0, 0
+                            0,     0.242, 0.758, 0, 0
+                            0,     0,     0,     1, 0"/>
+            </filter>
+            <filter id="deuteranopia-filter">
+                <feColorMatrix
+                    in="SourceGraphic"
+                    type="matrix"
+                    values="0.625, 0.375, 0,   0, 0
+                            0.7,   0.3,   0,   0, 0
+                            0,     0.3,   0.7, 0, 0
+                            0,     0,     0,   1, 0"/>
+            </filter>
+            <filter id="tritanopia-filter">
+                <feColorMatrix
+                    in="SourceGraphic"
+                    type="matrix"
+                    values="0.95, 0.05,  0,     0, 0
+                            0,    0.433, 0.567, 0, 0
+                            0,    0.475, 0.525, 0, 0
+                            0,    0,     0,     1, 0"/>
+            </filter>
+        `;
+        
+        document.body.appendChild(filtersSvg);
+    }
+}
 
-// Add to main.js
+// Function to update theme based on stock performance
 function updateThemeBasedOnPerformance(stockData) {
     if (!stockData || stockData.length < 2) return;
     
@@ -164,13 +222,16 @@ function applyMarketTheme(marketTheme) {
     // Set theme colors based on market sentiment
     if (marketTheme === 'bull') {
         root.style.setProperty('--highlight', isDark ? '#10b981' : '#059669');
-        document.querySelector('.navbar-brand span').style.color = isDark ? '#10b981' : '#059669';
+        const brandSpan = document.querySelector('.navbar-brand span');
+        if (brandSpan) brandSpan.style.color = isDark ? '#10b981' : '#059669';
     } else if (marketTheme === 'bear') {
         root.style.setProperty('--highlight', isDark ? '#ef4444' : '#dc2626');
-        document.querySelector('.navbar-brand span').style.color = isDark ? '#ef4444' : '#dc2626';
+        const brandSpan = document.querySelector('.navbar-brand span');
+        if (brandSpan) brandSpan.style.color = isDark ? '#ef4444' : '#dc2626';
     } else {
         root.style.setProperty('--highlight', isDark ? '#3b82f6' : '#2563eb');
-        document.querySelector('.navbar-brand span').style.color = isDark ? '#3b82f6' : '#2563eb';
+        const brandSpan = document.querySelector('.navbar-brand span');
+        if (brandSpan) brandSpan.style.color = isDark ? '#3b82f6' : '#2563eb';
     }
     
     // Update logo and theme
@@ -194,12 +255,7 @@ function updateLogoForTheme(marketTheme, isDark) {
     }
 }
 
-// Call this function when stock data is loaded
-// Add to the end of loadStockData() function:
-
-
 // Search function
-// In main.js
 function performSearch() {
     const ticker = document.getElementById('ticker-input').value.trim().toUpperCase();
     if (ticker) {
@@ -310,6 +366,9 @@ function initTheme() {
     } else {
         document.documentElement.setAttribute('data-bs-theme', 'light');
     }
+    
+    // Add color blindness filters
+    addColorBlindnessFilters();
 }
 
 // Toggle between light and dark themes
@@ -334,7 +393,39 @@ function toggleTheme() {
     console.log("Theme toggled to:", newTheme);
 }
 
-// Load stock data from API
+// Function to update chart theme
+function updateChartTheme(chart) {
+    if (!chart || typeof chart.updateOptions !== 'function') return;
+    
+    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    
+    chart.updateOptions({
+        theme: {
+            mode: isDark ? 'dark' : 'light'
+        },
+        tooltip: {
+            theme: isDark ? 'dark' : 'light'
+        },
+        grid: {
+            borderColor: isDark ? '#333' : '#e0e0e0'
+        },
+        xaxis: {
+            labels: {
+                style: {
+                    colors: isDark ? '#ccc' : '#666'
+                }
+            }
+        },
+        yaxis: {
+            labels: {
+                style: {
+                    colors: isDark ? '#ccc' : '#666'
+                }
+            }
+        }
+    });
+}
+
 // Load stock data from API
 function loadStockData(ticker) {
     console.log("Loading stock data for:", ticker);
@@ -376,8 +467,53 @@ function loadStockData(ticker) {
         });
 }
 
+// Create necessary tour elements
+function createTourElements() {
+    // Check if tour overlay exists, if not create it
+    if (!document.getElementById('tour-overlay')) {
+        const tourOverlay = document.createElement('div');
+        tourOverlay.id = 'tour-overlay';
+        tourOverlay.innerHTML = `
+            <div class="tour-highlight"></div>
+            <div class="tour-tooltip">
+                <div class="tour-step-title">Welcome!</div>
+                <div class="tour-step-content">Let me guide you through this dashboard.</div>
+                <div class="tour-nav">
+                    <button class="tour-prev">Previous</button>
+                    <div class="tour-progress">
+                        <span class="current-step">1</span>/<span class="total-steps">8</span>
+                    </div>
+                    <button class="tour-next">Next</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(tourOverlay);
+    }
+    
+    // Check if story-mode container exists, if not create it
+    if (!document.querySelector('.story-mode-container')) {
+        const storyModeContainer = document.createElement('div');
+        storyModeContainer.className = 'story-mode-container';
+        storyModeContainer.innerHTML = `
+            <div class="story-mode-content">
+                <div class="guide-character">
+                    <img src="/static/img/guide-character.png" alt="Guide" />
+                </div>
+                <div class="guide-message">
+                    <h3>Welcome to Market Pulse!</h3>
+                    <p>I'm here to help you navigate through this powerful stock analytics dashboard.</p>
+                    <div class="guide-actions">
+                        <button id="start-tour-btn" class="btn btn-primary">Start Tour</button>
+                        <button id="skip-tour-btn" class="btn btn-outline-secondary">Skip</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(storyModeContainer);
+    }
+}
 
-// Add to main.js
+// Language system
 // Create translation dictionaries
 const translations = {
     'en': {
@@ -433,6 +569,78 @@ const translations = {
     // Add other languages as needed
 };
 
+// Initialize language system
+function initLanguageSystem() {
+    // Add data-i18n attributes to elements
+    addI18nAttributes();
+    
+    // Set up language selector dropdown clicks
+    document.querySelectorAll('.dropdown-item[data-lang]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const langCode = this.getAttribute('data-lang');
+            changeLanguage(langCode);
+        });
+    });
+    
+    // Load preferred language
+    const preferredLanguage = localStorage.getItem('preferredLanguage') || 'en';
+    changeLanguage(preferredLanguage);
+}
+
+function addI18nAttributes() {
+    // Fixed version of the function to work with vanilla JavaScript
+    
+    // Navigation items
+    document.querySelectorAll('.nav-link').forEach(el => {
+        const text = el.textContent.trim();
+        if (text === 'Dashboard') el.setAttribute('data-i18n', 'dashboard');
+        if (text === 'News') el.setAttribute('data-i18n', 'news');
+        if (text === 'About') el.setAttribute('data-i18n', 'about');
+    });
+    
+    // Search placeholder
+    const searchInput = document.getElementById('ticker-input');
+    if (searchInput) {
+        searchInput.setAttribute('data-i18n', 'search_placeholder');
+    }
+    
+    // Headers
+    document.querySelectorAll('.card-header h5').forEach(el => {
+        const text = el.textContent.trim();
+        if (text.includes('Price History')) el.setAttribute('data-i18n', 'price_history');
+        if (text.includes('Sentiment Analysis')) el.setAttribute('data-i18n', 'sentiment_analysis');
+        if (text.includes('Key Metrics')) el.setAttribute('data-i18n', 'key_metrics');
+        if (text.includes('Latest News')) el.setAttribute('data-i18n', 'latest_news');
+    });
+    
+    // Helper function to assign i18n attributes by matching text content
+    function assignI18nByText(selector, textMatch, key) {
+        document.querySelectorAll(selector).forEach(el => {
+            if (el.textContent.trim().includes(textMatch)) {
+                el.setAttribute('data-i18n', key);
+            }
+        });
+    }
+    
+    // Apply to various elements
+    assignI18nByText('.loading-tip h5', 'Stock Tip', 'stock_tip');
+    assignI18nByText('.metric-label', 'Sector', 'sector');
+    assignI18nByText('.metric-label', 'Exchange', 'exchange');
+    assignI18nByText('.metric-label', 'Vol:', 'volume');
+    assignI18nByText('.metric-label', 'P/E:', 'pe_ratio');
+    assignI18nByText('.metric-label', 'Mkt Cap:', 'market_cap');
+    assignI18nByText('.metric-title', '52W High', 'year_high');
+    assignI18nByText('.metric-title', '52W Low', 'year_low');
+    assignI18nByText('.metric-title', 'Avg Volume', 'avg_volume');
+    assignI18nByText('.metric-title', 'Dividend', 'dividend');
+    assignI18nByText('.metric-title', 'Beta', 'beta');
+    assignI18nByText('.metric-title', 'EPS', 'eps');
+    assignI18nByText('.metric-label', 'Buzz Score', 'buzz_score');
+    assignI18nByText('.metric-label', 'Bullish Sentiment', 'bullish_sentiment');
+    assignI18nByText('.metric-label', 'Sector Average', 'sector_average');
+}
+
 function changeLanguage(langCode) {
     if (!translations[langCode]) return;
     
@@ -449,87 +657,20 @@ function changeLanguage(langCode) {
     });
     
     // Update selected language in dropdown
-    document.querySelector('.language-text').textContent = 
-        langCode === 'en' ? 'English' : 
-        langCode === 'es' ? 'Español' : 
-        langCode === 'fr' ? 'Français' : 
-        langCode === 'de' ? 'Deutsch' : 
-        langCode === 'zh' ? '中文' : 'English';
+    const langText = document.querySelector('.language-text');
+    if (langText) {
+        langText.textContent = 
+            langCode === 'en' ? 'English' : 
+            langCode === 'es' ? 'Español' : 
+            langCode === 'fr' ? 'Français' : 
+            langCode === 'de' ? 'Deutsch' : 
+            langCode === 'zh' ? '中文' : 'English';
+    }
     
     // Store language preference
     localStorage.setItem('preferredLanguage', langCode);
 }
 
-// Initialize language selectors
-document.addEventListener('DOMContentLoaded', function() {
-    // Add i18n attributes to elements
-    addI18nAttributes();
-    
-    // Set up language selector
-    const languageLinks = document.querySelectorAll('.dropdown-item[data-lang]');
-    languageLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const langCode = this.getAttribute('data-lang');
-            changeLanguage(langCode);
-        });
-    });
-    
-    // Load preferred language
-    const preferredLanguage = localStorage.getItem('preferredLanguage') || 'en';
-    changeLanguage(preferredLanguage);
-});
-
-function addI18nAttributes() {
-    // Navigation items
-    document.querySelectorAll('.nav-link').forEach(el => {
-        if (el.textContent.trim() === 'Dashboard') el.setAttribute('data-i18n', 'dashboard');
-        if (el.textContent.trim() === 'News') el.setAttribute('data-i18n', 'news');
-        if (el.textContent.trim() === 'About') el.setAttribute('data-i18n', 'about');
-    });
-    
-    // Search placeholder
-    const searchInput = document.getElementById('ticker-input');
-    if (searchInput) {
-        searchInput.setAttribute('data-i18n', 'search_placeholder');
-    }
-    
-    // Headers
-    document.querySelectorAll('.card-header h5').forEach(el => {
-        if (el.textContent.includes('Price History')) el.setAttribute('data-i18n', 'price_history');
-        if (el.textContent.includes('Sentiment Analysis')) el.setAttribute('data-i18n', 'sentiment_analysis');
-        if (el.textContent.includes('Key Metrics')) el.setAttribute('data-i18n', 'key_metrics');
-        if (el.textContent.includes('Latest News')) el.setAttribute('data-i18n', 'latest_news');
-    });
-    
-    // Other elements - add more as needed
-    const elementsToTranslate = [
-        { selector: '.loading-tip h5', key: 'stock_tip' },
-        { selector: '.metric-label:contains("Sector")', key: 'sector' },
-        { selector: '.metric-label:contains("Exchange")', key: 'exchange' },
-        { selector: '.metric-label:contains("Vol:")', key: 'volume' },
-        { selector: '.metric-label:contains("P/E:")', key: 'pe_ratio' },
-        { selector: '.metric-label:contains("Mkt Cap:")', key: 'market_cap' },
-        { selector: '.metric-title:contains("52W High")', key: 'year_high' },
-        { selector: '.metric-title:contains("52W Low")', key: 'year_low' },
-        { selector: '.metric-title:contains("Avg Volume")', key: 'avg_volume' },
-        { selector: '.metric-title:contains("Dividend")', key: 'dividend' },
-        { selector: '.metric-title:contains("Beta")', key: 'beta' },
-        { selector: '.metric-title:contains("EPS")', key: 'eps' },
-        { selector: '.metric-label:contains("Buzz Score")', key: 'buzz_score' },
-        { selector: '.metric-label:contains("Bullish Sentiment")', key: 'bullish_sentiment' },
-        { selector: '.metric-label:contains("Sector Average")', key: 'sector_average' }
-    ];
-    
-    elementsToTranslate.forEach(item => {
-        const elements = document.querySelectorAll(item.selector);
-        elements.forEach(el => {
-            el.setAttribute('data-i18n', item.key);
-        });
-    });
-}
-
-// Add to main.js
 // Tour guide functionality
 let currentTourStep = 0;
 const tourSteps = [
@@ -590,45 +731,75 @@ function initStoryMode() {
     if (!hasVisited) {
         // Show character after a short delay
         setTimeout(() => {
-            document.querySelector('.story-mode-container').classList.add('active');
+            const storyContainer = document.querySelector('.story-mode-container');
+            if (storyContainer) {
+                storyContainer.classList.add('active');
+            }
         }, 1500);
         
         // Set up event listeners
-        document.getElementById('start-tour-btn').addEventListener('click', startTour);
-        document.getElementById('skip-tour-btn').addEventListener('click', skipTour);
+        const startTourBtn = document.getElementById('start-tour-btn');
+        if (startTourBtn) {
+            startTourBtn.addEventListener('click', startTour);
+        }
+        
+        const skipTourBtn = document.getElementById('skip-tour-btn');
+        if (skipTourBtn) {
+            skipTourBtn.addEventListener('click', skipTour);
+        }
     } else {
         // Add help button for returning visitors
         const navbar = document.querySelector('.navbar-nav');
-        const helpLi = document.createElement('li');
-        helpLi.className = 'nav-item';
-        helpLi.innerHTML = `
-            <a class="nav-link" href="#" id="help-button">
-                <i class="far fa-question-circle"></i> Help
-            </a>
-        `;
-        navbar.appendChild(helpLi);
-        
-        // Add event listener to help button
-        document.getElementById('help-button').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.querySelector('.story-mode-container').classList.add('active');
-        });
+        if (navbar && !document.getElementById('help-button')) {
+            const helpLi = document.createElement('li');
+            helpLi.className = 'nav-item';
+            helpLi.innerHTML = `
+                <a class="nav-link" href="#" id="help-button">
+                    <i class="far fa-question-circle"></i> Help
+                </a>
+            `;
+            navbar.appendChild(helpLi);
+            
+            // Add event listener to help button
+            document.getElementById('help-button').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector('.story-mode-container').classList.add('active');
+            });
+        }
     }
     
     // Set up tour navigation
-    document.querySelector('.tour-next').addEventListener('click', nextTourStep);
-    document.querySelector('.tour-prev').addEventListener('click', prevTourStep);
+    const tourNext = document.querySelector('.tour-next');
+    if (tourNext) {
+        tourNext.addEventListener('click', nextTourStep);
+    }
+    
+    const tourPrev = document.querySelector('.tour-prev');
+    if (tourPrev) {
+        tourPrev.addEventListener('click', prevTourStep);
+    }
 }
 
 function startTour() {
-    document.querySelector('.story-mode-container').classList.remove('active');
+    const storyContainer = document.querySelector('.story-mode-container');
+    if (storyContainer) {
+        storyContainer.classList.remove('active');
+    }
+    
     currentTourStep = 0;
     showTourStep(currentTourStep);
-    document.getElementById('tour-overlay').classList.add('active');
+    
+    const tourOverlay = document.getElementById('tour-overlay');
+    if (tourOverlay) {
+        tourOverlay.classList.add('active');
+    }
 }
 
 function skipTour() {
-    document.querySelector('.story-mode-container').classList.remove('active');
+    const storyContainer = document.querySelector('.story-mode-container');
+    if (storyContainer) {
+        storyContainer.classList.remove('active');
+    }
     localStorage.setItem('hasVisitedBefore', 'true');
 }
 
@@ -638,12 +809,22 @@ function showTourStep(stepIndex) {
     const step = tourSteps[stepIndex];
     const targetElement = document.querySelector(step.element);
     
-    if (!targetElement) return;
+    if (!targetElement) {
+        console.warn(`Tour target element not found: ${step.element}`);
+        // Skip to next step if element not found
+        nextTourStep();
+        return;
+    }
     
     // Get element position
     const rect = targetElement.getBoundingClientRect();
     const highlight = document.querySelector('.tour-highlight');
     const tooltip = document.querySelector('.tour-tooltip');
+    
+    if (!highlight || !tooltip) {
+        console.error('Tour highlight or tooltip elements missing');
+        return;
+    }
     
     // Position highlight
     highlight.style.width = `${rect.width + 20}px`;
@@ -682,16 +863,25 @@ function showTourStep(stepIndex) {
     tooltip.style.top = `${tooltipTop}px`;
     
     // Update content
-    document.querySelector('.tour-step-title').textContent = step.title;
-    document.querySelector('.tour-step-content').textContent = step.content;
+    const titleEl = document.querySelector('.tour-step-title');
+    const contentEl = document.querySelector('.tour-step-content');
+    
+    if (titleEl) titleEl.textContent = step.title;
+    if (contentEl) contentEl.textContent = step.content;
     
     // Update progress
-    document.querySelector('.current-step').textContent = stepIndex + 1;
-    document.querySelector('.total-steps').textContent = tourSteps.length;
+    const currentStepEl = document.querySelector('.current-step');
+    const totalStepsEl = document.querySelector('.total-steps');
+    
+    if (currentStepEl) currentStepEl.textContent = stepIndex + 1;
+    if (totalStepsEl) totalStepsEl.textContent = tourSteps.length;
     
     // Manage nav buttons
-    document.querySelector('.tour-prev').style.visibility = stepIndex === 0 ? 'hidden' : 'visible';
-    document.querySelector('.tour-next').textContent = stepIndex === tourSteps.length - 1 ? 'Finish' : 'Next';
+    const prevBtn = document.querySelector('.tour-prev');
+    const nextBtn = document.querySelector('.tour-next');
+    
+    if (prevBtn) prevBtn.style.visibility = stepIndex === 0 ? 'hidden' : 'visible';
+    if (nextBtn) nextBtn.textContent = stepIndex === tourSteps.length - 1 ? 'Finish' : 'Next';
     
     // Scroll to element
     window.scrollTo({
@@ -705,7 +895,10 @@ function nextTourStep() {
     
     if (currentTourStep >= tourSteps.length) {
         // End of tour
-        document.getElementById('tour-overlay').classList.remove('active');
+        const tourOverlay = document.getElementById('tour-overlay');
+        if (tourOverlay) {
+            tourOverlay.classList.remove('active');
+        }
         localStorage.setItem('hasVisitedBefore', 'true');
         return;
     }
@@ -720,13 +913,7 @@ function prevTourStep() {
     }
 }
 
-// Call this in document ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Other initializations...
-    initStoryMode();
-});
-
-// In main.js - Add this array of tips
+// Stock tips array
 const stockTips = [
     "Dollar-cost averaging can help reduce the impact of volatility on your portfolio.",
     "Consider diversifying across different sectors to spread risk.",
@@ -744,7 +931,7 @@ const stockTips = [
     "The Rule of 72: Divide 72 by the annual interest rate to estimate how many years it takes to double your money.",
 ];
 
-// Modify the loading overlay activation
+// Show loading overlay with random tips
 function showLoadingOverlay(active = true) {
     const overlays = document.querySelectorAll('.loading-overlay');
     
@@ -763,8 +950,6 @@ function showLoadingOverlay(active = true) {
     });
 }
 
-
-// Add to main.js
 // Voice navigation system
 let recognition = null;
 let synthesis = null;
@@ -773,56 +958,80 @@ let textToSpeechEnabled = false;
 let currentFontSize = 1.0;
 
 function initAccessibility() {
+    const accessibilityToggle = document.getElementById('accessibility-toggle');
+    if (!accessibilityToggle) return;
+    
     // Setup accessibility panel toggle
-    document.getElementById('accessibility-toggle').addEventListener('click', function() {
+    accessibilityToggle.addEventListener('click', function() {
         const panel = document.getElementById('accessibility-panel');
-        panel.classList.toggle('show');
+        if (panel) panel.classList.toggle('show');
     });
     
     // Voice navigation toggle
-    document.getElementById('voice-navigation-toggle').addEventListener('change', function() {
-        if (this.checked) {
-            startVoiceRecognition();
-            showNotification("Voice navigation activated. Try saying 'search Apple' or 'show news'");
-        } else {
-            stopVoiceRecognition();
-            showNotification("Voice navigation deactivated");
-        }
-    });
+    const voiceToggle = document.getElementById('voice-navigation-toggle');
+    if (voiceToggle) {
+        voiceToggle.addEventListener('change', function() {
+            if (this.checked) {
+                startVoiceRecognition();
+                showNotification("Voice navigation activated. Try saying 'search Apple' or 'show news'");
+            } else {
+                stopVoiceRecognition();
+                showNotification("Voice navigation deactivated");
+            }
+        });
+    }
     
     // Text-to-speech toggle
-    document.getElementById('text-to-speech-toggle').addEventListener('change', function() {
-        textToSpeechEnabled = this.checked;
-        if (this.checked) {
-            synthesis = window.speechSynthesis;
-            speak("Text to speech enabled");
-        } else {
-            if (synthesis) {
-                synthesis.cancel();
+    const ttsToggle = document.getElementById('text-to-speech-toggle');
+    if (ttsToggle) {
+        ttsToggle.addEventListener('change', function() {
+            textToSpeechEnabled = this.checked;
+            if (this.checked) {
+                synthesis = window.speechSynthesis;
+                speak("Text to speech enabled");
+            } else {
+                if (synthesis) {
+                    synthesis.cancel();
+                }
             }
-        }
-    });
+        });
+    }
     
     // Screen reader button
-    document.getElementById('screen-reader-btn').addEventListener('click', readPageContent);
+    const screenReaderBtn = document.getElementById('screen-reader-btn');
+    if (screenReaderBtn) {
+        screenReaderBtn.addEventListener('click', readPageContent);
+    }
     
     // Colorblind mode selector
-    document.getElementById('colorblind-mode').addEventListener('change', function() {
-        applyColorBlindMode(this.value);
-    });
+    const colorblindMode = document.getElementById('colorblind-mode');
+    if (colorblindMode) {
+        colorblindMode.addEventListener('change', function() {
+            applyColorBlindMode(this.value);
+        });
+    }
     
     // Text size controls
-    document.getElementById('text-smaller').addEventListener('click', function() {
-        changeTextSize(-0.1);
-    });
+    const textSmaller = document.getElementById('text-smaller');
+    if (textSmaller) {
+        textSmaller.addEventListener('click', function() {
+            changeTextSize(-0.1);
+        });
+    }
     
-    document.getElementById('text-reset').addEventListener('click', function() {
-        resetTextSize();
-    });
+    const textReset = document.getElementById('text-reset');
+    if (textReset) {
+        textReset.addEventListener('click', function() {
+            resetTextSize();
+        });
+    }
     
-    document.getElementById('text-larger').addEventListener('click', function() {
-        changeTextSize(0.1);
-    });
+    const textLarger = document.getElementById('text-larger');
+    if (textLarger) {
+        textLarger.addEventListener('click', function() {
+            changeTextSize(0.1);
+        });
+    }
     
     // Add speech recognition to news items
     addSpeechToNews();
@@ -848,7 +1057,8 @@ function startVoiceRecognition() {
     recognition.onend = function() {
         isListening = false;
         showListeningIndicator(false);
-        if (document.getElementById('voice-navigation-toggle').checked) {
+        const voiceToggle = document.getElementById('voice-navigation-toggle');
+        if (voiceToggle && voiceToggle.checked) {
             recognition.start();
         }
     };
@@ -908,13 +1118,16 @@ function processVoiceCommand(command) {
     // Navigation commands
     else if (command.includes('go to') || command.includes('show')) {
         if (command.includes('news')) {
-            document.querySelector('a[href="#news-section"]').click();
+            const newsLink = document.querySelector('a[href="#news-section"]');
+            if (newsLink) newsLink.click();
             response = "Showing news section";
         } else if (command.includes('about')) {
-            document.querySelector('a[href="/about"]').click();
+            const aboutLink = document.querySelector('a[href="/about"]');
+            if (aboutLink) aboutLink.click();
             response = "Going to About page";
         } else if (command.includes('dashboard') || command.includes('home')) {
-            document.querySelector('a[href="/"]').click();
+            const homeLink = document.querySelector('a[href="/"]');
+            if (homeLink) homeLink.click();
             response = "Going to dashboard";
         } else {
             response = "I'm not sure where you want to navigate to";
@@ -928,19 +1141,23 @@ function processVoiceCommand(command) {
     // Chart commands
     else if (command.includes('chart') || command.includes('graph')) {
         if (command.includes('day') || command.includes('week')) {
-            document.querySelector('.time-range[data-range="7"]').click();
+            const weekBtn = document.querySelector('.time-range[data-range="7"]');
+            if (weekBtn) weekBtn.click();
             response = "Showing 1 week chart";
         } else if (command.includes('month')) {
-            document.querySelector('.time-range[data-range="30"]').click();
+            const monthBtn = document.querySelector('.time-range[data-range="30"]');
+            if (monthBtn) monthBtn.click();
             response = "Showing 1 month chart";
         } else if (command.includes('year')) {
-            document.querySelector('.time-range[data-range="365"]').click();
+            const yearBtn = document.querySelector('.time-range[data-range="365"]');
+            if (yearBtn) yearBtn.click();
             response = "Showing 1 year chart";
         }
     }
     // Help command
     else if (command.includes('help') || command.includes('tour')) {
-        document.querySelector('.story-mode-container').classList.add('active');
+        const storyContainer = document.querySelector('.story-mode-container');
+        if (storyContainer) storyContainer.classList.add('active');
         response = "Help is available. Would you like a tour?";
     }
     // Read news command
@@ -987,7 +1204,11 @@ function speak(text) {
     utterance.volume = 1.0;
     
     if (synthesis) {
+        synthesis.cancel(); // Cancel any ongoing speech
         synthesis.speak(utterance);
+    } else if (window.speechSynthesis) {
+        window.speechSynthesis.cancel(); // Fallback if synthesis not set
+        window.speechSynthesis.speak(utterance);
     }
 }
 
@@ -1001,12 +1222,18 @@ function readPageContent() {
     window.speechSynthesis.cancel();
     
     // Collect important page content
-    const stockName = document.getElementById('company-name').textContent;
-    const stockPrice = document.getElementById('stock-price').textContent;
-    const priceChange = document.getElementById('price-change').textContent;
+    const stockName = document.getElementById('company-name');
+    const stockPrice = document.getElementById('stock-price');
+    const priceChange = document.getElementById('price-change');
     
     // Create text to read
-    let textToRead = `You are viewing data for ${stockName}. The current stock price is ${stockPrice}, which is ${priceChange} today.`;
+    let textToRead = "Reading dashboard information. ";
+    
+    if (stockName && stockPrice && priceChange) {
+        textToRead += `You are viewing data for ${stockName.textContent}. The current stock price is ${stockPrice.textContent}, which is ${priceChange.textContent} today.`;
+    } else {
+        textToRead += "Stock information is still loading.";
+    }
     
     // Add sentiment information if available
     const bullishScore = document.getElementById('bullish-score');
@@ -1038,16 +1265,18 @@ function readNews() {
     
     // Get the first 3 news items
     for (let i = 0; i < Math.min(3, newsItems.length); i++) {
-        const title = newsItems[i].querySelector('.news-title').textContent;
-        const source = newsItems[i].querySelector('.news-source').textContent;
-        newsText += `${i+1}. From ${source}: ${title}. `;
+        const title = newsItems[i].querySelector('.news-title');
+        const source = newsItems[i].querySelector('.news-source');
+        if (title && source) {
+            newsText += `${i+1}. From ${source.textContent}: ${title.textContent}. `;
+        }
     }
     
     speak(newsText);
 }
 
 function addSpeechToNews() {
-    // Add text-to-speech buttons to news items
+    // Create and listen for custom event
     document.addEventListener('newsDisplayed', function() {
         const newsItems = document.querySelectorAll('.news-item');
         
@@ -1055,19 +1284,23 @@ function addSpeechToNews() {
             // Check if this item already has a speech button
             if (!item.querySelector('.news-speech-btn')) {
                 const newsContent = item.querySelector('.news-content');
-                const speechBtn = document.createElement('button');
-                speechBtn.className = 'news-speech-btn';
-                speechBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-                speechBtn.title = 'Read this news item';
-                speechBtn.setAttribute('aria-label', 'Read this news item');
-                
-                speechBtn.addEventListener('click', function() {
-                    const title = item.querySelector('.news-title').textContent;
-                    const source = item.querySelector('.news-source').textContent;
-                    speak(`From ${source}: ${title}`);
-                });
-                
-                item.insertBefore(speechBtn, newsContent);
+                if (newsContent) {
+                    const speechBtn = document.createElement('button');
+                    speechBtn.className = 'news-speech-btn';
+                    speechBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                    speechBtn.title = 'Read this news item';
+                    speechBtn.setAttribute('aria-label', 'Read this news item');
+                    
+                    speechBtn.addEventListener('click', function() {
+                        const title = item.querySelector('.news-title');
+                        const source = item.querySelector('.news-source');
+                        if (title && source) {
+                            speak(`From ${source.textContent}: ${title.textContent}`);
+                        }
+                    });
+                    
+                    item.insertBefore(speechBtn, newsContent);
+                }
             }
         });
     });
@@ -1112,49 +1345,6 @@ function applyColorBlindMode(mode) {
             root.style.setProperty('--negative', isDark ? '#ef4444' : '#dc2626');
             root.style.setProperty('--highlight', isDark ? '#3b82f6' : '#2563eb');
     }
-    
-    // Add SVG filters for color blindness if they don't exist
-    addColorBlindnessFilters();
-}
-
-function addColorBlindnessFilters() {
-    if (!document.getElementById('colorblind-filters')) {
-        const filtersSvg = document.createElement('svg');
-        filtersSvg.id = 'colorblind-filters';
-        filtersSvg.style.display = 'none';
-        
-        filtersSvg.innerHTML = `
-            <filter id="protanopia-filter">
-                <feColorMatrix
-                    in="SourceGraphic"
-                    type="matrix"
-                    values="0.567, 0.433, 0,     0, 0
-                            0.558, 0.442, 0,     0, 0
-                            0,     0.242, 0.758, 0, 0
-                            0,     0,     0,     1, 0"/>
-            </filter>
-            <filter id="deuteranopia-filter">
-                <feColorMatrix
-                    in="SourceGraphic"
-                    type="matrix"
-                    values="0.625, 0.375, 0,   0, 0
-                            0.7,   0.3,   0,   0, 0
-                            0,     0.3,   0.7, 0, 0
-                            0,     0,     0,   1, 0"/>
-            </filter>
-            <filter id="tritanopia-filter">
-                <feColorMatrix
-                    in="SourceGraphic"
-                    type="matrix"
-                    values="0.95, 0.05,  0,     0, 0
-                            0,    0.433, 0.567, 0, 0
-                            0,    0.475, 0.525, 0, 0
-                            0,    0,     0,     1, 0"/>
-            </filter>
-        `;
-        
-        document.body.appendChild(filtersSvg);
-    }
 }
 
 function changeTextSize(delta) {
@@ -1187,22 +1377,6 @@ function showNotification(message) {
     }, 3000);
 }
 
-// Initialize accessibility features when document is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Other initializations...
-    initAccessibility();
-});
-
-// Create and dispatch custom event when news is displayed
-function displayNews(newsItems) {
-    // Existing news display code...
-    
-    // Dispatch custom event
-    const newsEvent = new CustomEvent('newsDisplayed');
-    document.dispatchEvent(newsEvent);
-}
-// Update CSS for loading overlay
-
 // Load news data from API
 function loadNewsData(ticker) {
     console.log("Loading news data for:", ticker);
@@ -1215,10 +1389,79 @@ function loadNewsData(ticker) {
         })
         .then(data => {
             displayNews(data);
+            
+            // Dispatch custom event
+            const newsEvent = new CustomEvent('newsDisplayed');
+            document.dispatchEvent(newsEvent);
         })
         .catch(error => {
             console.error('Error fetching news data:', error);
         });
+}
+
+// Display news function
+function displayNews(newsItems) {
+    const newsContainer = document.getElementById('news-container');
+    if (!newsContainer) return;
+    
+    // Clear existing news
+    newsContainer.innerHTML = '';
+    
+    // Display each news item
+    if (newsItems && newsItems.length > 0) {
+        newsItems.forEach(item => {
+            // Format date
+            const pubDate = new Date(item.publishedAt);
+            const formattedDate = pubDate.toLocaleDateString() + ' ' + pubDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Create sentiment class
+            const sentimentClass = item.sentiment_label || 'neutral';
+            
+            // Create news item element
+            const newsItemEl = document.createElement('div');
+            newsItemEl.className = `news-item ${sentimentClass}`;
+            newsItemEl.innerHTML = `
+                <div class="news-header">
+                    <span class="news-source">${item.source}</span>
+                    <span class="news-date">${formattedDate}</span>
+                    <span class="news-sentiment-indicator ${sentimentClass}"></span>
+                </div>
+                <h3 class="news-title">
+                    <a href="${item.url}" target="_blank">${item.title}</a>
+                </h3>
+                <div class="news-content">
+                    <p>${item.description || 'Click to read more...'}</p>
+                </div>
+            `;
+            
+            newsContainer.appendChild(newsItemEl);
+        });
+    } else {
+        // No news available
+        newsContainer.innerHTML = `
+            <div class="no-news">
+                <i class="fas fa-newspaper"></i>
+                <p>No recent news available for this stock</p>
+            </div>
+        `;
+    }
+}
+
+// Function to filter news by sentiment
+function filterNewsBySentiment(sentiment) {
+    const newsItems = document.querySelectorAll('.news-item');
+    
+    newsItems.forEach(item => {
+        if (sentiment === 'all') {
+            item.style.display = 'block';
+        } else {
+            if (item.classList.contains(sentiment)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
 }
 
 // Load sentiment data from API
@@ -1237,9 +1480,14 @@ function loadSentimentData(ticker) {
             const bullishScore = Math.round(data.sentiment_score * 100);
             const sectorScore = Math.round(data.sector_sentiment * 100);
             
-            document.getElementById('buzz-score').textContent = buzzScore;
-            document.getElementById('bullish-score').textContent = `${bullishScore}%`;
-            document.getElementById('sector-score').textContent = `${sectorScore}%`;
+            const buzzScoreEl = document.getElementById('buzz-score');
+            if (buzzScoreEl) buzzScoreEl.textContent = buzzScore;
+            
+            const bullishScoreEl = document.getElementById('bullish-score');
+            if (bullishScoreEl) bullishScoreEl.textContent = `${bullishScore}%`;
+            
+            const sectorScoreEl = document.getElementById('sector-score');
+            if (sectorScoreEl) sectorScoreEl.textContent = `${sectorScore}%`;
             
             // Update progress bars
             const buzzBar = document.getElementById('buzz-score-bar');
@@ -1256,6 +1504,118 @@ function loadSentimentData(ticker) {
         .catch(error => {
             console.error('Error fetching sentiment data:', error);
         });
+}
+
+// Update sentiment chart
+function updateSentimentChart(bullishScore, sectorScore) {
+    // Check if ApexCharts is available
+    if (typeof ApexCharts === 'undefined') {
+        console.error("ApexCharts is not loaded");
+        return;
+    }
+    
+    const chartEl = document.getElementById('sentiment-chart');
+    if (!chartEl) return;
+    
+    // If chart already exists, destroy it first
+    if (window.sentimentChart) {
+        window.sentimentChart.destroy();
+    }
+    
+    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    
+    const options = {
+        series: [{
+            name: 'Bullish',
+            data: [bullishScore]
+        }, {
+            name: 'Sector Avg',
+            data: [sectorScore]
+        }],
+        chart: {
+            type: 'bar',
+            height: 180,
+            toolbar: {
+                show: false
+            },
+            background: 'transparent',
+            theme: {
+                mode: isDark ? 'dark' : 'light'
+            }
+        },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                dataLabels: {
+                    position: 'top',
+                },
+                barHeight: '80%',
+                distributed: true
+            },
+        },
+        colors: [
+            bullishScore > 60 ? '#10b981' : 
+            bullishScore > 40 ? '#3b82f6' : '#ef4444',
+            '#6b7280'
+        ],
+        dataLabels: {
+            enabled: true,
+            formatter: function (val) {
+                return val + "%";
+            },
+            offsetX: 20,
+            style: {
+                fontSize: '12px',
+                colors: [isDark ? '#fff' : '#000']
+            }
+        },
+        tooltip: {
+            theme: isDark ? 'dark' : 'light',
+        },
+        xaxis: {
+            categories: ['Sentiment'],
+            max: 100,
+            labels: {
+                show: false
+            },
+            axisBorder: {
+                show: false
+            },
+            axisTicks: {
+                show: false
+            }
+        },
+        yaxis: {
+            labels: {
+                show: false
+            }
+        },
+        grid: {
+            show: false
+        },
+        legend: {
+            position: 'top',
+            horizontalAlign: 'left',
+            labels: {
+                colors: isDark ? '#fff' : '#000'
+            }
+        },
+        title: {
+            text: 'Market Sentiment',
+            align: 'center',
+            style: {
+                fontSize: '14px',
+                color: isDark ? '#ccc' : '#333'
+            }
+        }
+    };
+    
+    try {
+        window.sentimentChart = new ApexCharts(chartEl, options);
+        window.sentimentChart.render();
+    } catch (e) {
+        console.error("Error rendering sentiment chart:", e);
+    }
 }
 
 // Function to show error messages
@@ -1283,17 +1643,25 @@ function showError(message) {
     toastContainer.appendChild(toastElement);
     document.body.appendChild(toastContainer);
     
-    // Initialize and show toast
-    const toast = new bootstrap.Toast(toastElement, {
-        autohide: true,
-        delay: 5000
-    });
-    toast.show();
-    
-    // Remove from DOM after hidden
-    toastElement.addEventListener('hidden.bs.toast', function() {
-        document.body.removeChild(toastContainer);
-    });
+    // Initialize and show toast if Bootstrap is available
+    if (typeof bootstrap !== 'undefined') {
+        const toast = new bootstrap.Toast(toastElement, {
+            autohide: true,
+            delay: 5000
+        });
+        toast.show();
+        
+        // Remove from DOM after hidden
+        toastElement.addEventListener('hidden.bs.toast', function() {
+            document.body.removeChild(toastContainer);
+        });
+    } else {
+        // Fallback if Bootstrap is not available
+        toastElement.style.display = 'block';
+        setTimeout(() => {
+            document.body.removeChild(toastContainer);
+        }, 5000);
+    }
 }
 
 // Add animated numbers effect to metrics
@@ -1403,294 +1771,76 @@ setTimeout(function() {
     document.dispatchEvent(event);
 }, 1000);
 
-
-// Parallel interaction mode
-let parallelChartLeft;
-let parallelChartRight;
-
-// Initialize parallel mode
-document.getElementById('enable-parallel').addEventListener('click', function() {
-    document.getElementById('parallel-mode').classList.add('active');
-    initParallelMode();
-});
-
-document.getElementById('close-parallel').addEventListener('click', function() {
-    document.getElementById('parallel-mode').classList.remove('active');
-});
-
-function initParallelMode() {
-    // Initialize left side
-    document.getElementById('search-left').addEventListener('click', function() {
-        const ticker = document.getElementById('ticker-left').value.trim().toUpperCase();
-        if (ticker) {
-            loadParallelStockData(ticker, 'left');
-        }
-    });
-    
-    document.getElementById('ticker-left').addEventListener('keyup', function(event) {
-        if (event.key === 'Enter') {
-            document.getElementById('search-left').click();
-        }
-    });
-    
-    // Initialize right side
-    document.getElementById('search-right').addEventListener('click', function() {
-        const ticker = document.getElementById('ticker-right').value.trim().toUpperCase();
-        if (ticker) {
-            loadParallelStockData(ticker, 'right');
-        }
-    });
-    
-    document.getElementById('ticker-right').addEventListener('keyup', function(event) {
-        if (event.key === 'Enter') {
-            document.getElementById('search-right').click();
-        }
-    });
-    
-    // Load default tickers
-    document.getElementById('ticker-left').value = 'AAPL';
-    document.getElementById('ticker-right').value = 'MSFT';
-    
-    document.getElementById('search-left').click();
-    document.getElementById('search-right').click();
-}
-
-function loadParallelStockData(ticker, side) {
-    fetch(`/api/stock_data?ticker=${ticker}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.length > 0) {
-                updateParallelChart(data, side);
-                
-                // Get sentiment data
-                fetch(`/api/stock_sentiment?ticker=${ticker}`)
-                    .then(response => response.json())
-                    .then(sentimentData => {
-                        updateParallelSentiment(sentimentData, side, ticker);
-                    })
-                    .catch(error => {
-                        console.error(`Error fetching sentiment data for ${side}:`, error);
-                    });
-            }
-        })
-        .catch(error => {
-            console.error(`Error fetching stock data for ${side}:`, error);
-        });
-}
-
-function updateParallelChart(data, side) {
-    const chartElement = document.getElementById(`chart-${side}`);
-    const priceElement = document.getElementById(`price-${side}`);
-    const changeElement = document.getElementById(`change-${side}`);
-    
-    // Calculate price and change
-    const latestData = data[data.length - 1];
-    const previousData = data[data.length - 2];
-    
-    const price = parseFloat(latestData.close).toFixed(2);
-    priceElement.textContent = `$${price}`;
-    
-    // Calculate change
-    if (previousData) {
-        const change = parseFloat(latestData.close) - parseFloat(previousData.close);
-        const percentChange = (change / parseFloat(previousData.close) * 100).toFixed(2);
-        
-        changeElement.textContent = `${change >= 0 ? '+' : ''}${percentChange}%`;
-        changeElement.className = `metric-value ${change >= 0 ? 'positive' : 'negative'}`;
-    }
-    
-    // Format chart data - last 30 days
-    const chartData = data.slice(-30).map(d => ({
-        x: new Date(d.date).getTime(),
-        y: parseFloat(d.close)
-    }));
-    
-    const options = {
-        chart: {
-            type: 'area',
-            height: 200,
-            toolbar: {
-                show: false
-            },
-            animations: {
-                enabled: true
-            }
-        },
-        stroke: {
-            curve: 'smooth',
-            width: 2
-        },
-        series: [{
-            name: 'Price',
-            data: chartData
-        }],
-        colors: [side === 'left' ? '#3b82f6' : '#ef4444'],
-        fill: {
-            type: 'gradient',
-            gradient: {
-                shadeIntensity: 1,
-                opacityFrom: 0.7,
-                opacityTo: 0.2,
-                stops: [0, 90, 100]
-            }
-        },
-        xaxis: {
-            type: 'datetime',
-            labels: {
-                show: false
-            },
-            axisBorder: {
-                show: false
-            },
-            axisTicks: {
-                show: false
-            }
-        },
-        yaxis: {
-            labels: {
-                style: {
-                    fontFamily: 'Roboto Mono, monospace',
-                    fontSize: '10px'
-                },
-                formatter: function(val) {
-                    return '$' + val.toFixed(0);
-                }
-            }
-        },
-        grid: {
-            show: false
-        },
-        tooltip: {
-            x: {
-                format: 'MMM dd'
-            }
-        },
-        dataLabels: {
-            enabled: false
-        }
-    };
-    
-    if (side === 'left') {
-        if (parallelChartLeft) {
-            parallelChartLeft.destroy();
-        }
-        parallelChartLeft = new ApexCharts(chartElement, options);
-        parallelChartLeft.render();
-    } else {
-        if (parallelChartRight) {
-            parallelChartRight.destroy();
-        }
-        parallelChartRight = new ApexCharts(chartElement, options);
-        parallelChartRight.render();
-    }
-}
-
-function updateParallelSentiment(data, side, ticker) {
-    const sentimentElement = document.getElementById(`sentiment-${side}`);
-    const sentimentScore = Math.round(data.sentiment_score * 100);
-    sentimentElement.textContent = `${sentimentScore}%`;
-    
-    // Update winner section if both sides have data
-    const otherSide = side === 'left' ? 'right' : 'left';
-    const otherSentimentElement = document.getElementById(`sentiment-${otherSide}`);
-    const otherPriceElement = document.getElementById(`price-${otherSide}`);
-    const priceElement = document.getElementById(`price-${side}`);
-    const changeElement = document.getElementById(`change-${side}`);
-    const otherChangeElement = document.getElementById(`change-${otherSide}`);
-    
-    if (otherSentimentElement.textContent !== '0%' && 
-        otherPriceElement.textContent !== '$0.00' && 
-        priceElement.textContent !== '$0.00') {
-        
-        determineWinner();
-    }
-}
-
-function determineWinner() {
-    const leftChange = parseFloat(document.getElementById('change-left').textContent);
-    const rightChange = parseFloat(document.getElementById('change-right').textContent);
-    const leftSentiment = parseFloat(document.getElementById('sentiment-left').textContent);
-    const rightSentiment = parseFloat(document.getElementById('sentiment-right').textContent);
-    
-    const leftTicker = document.getElementById('ticker-left').value;
-    const rightTicker = document.getElementById('ticker-right').value;
-    
-    let winner;
-    let reason;
-    
-    // Simple scoring system
-    const leftScore = leftChange + leftSentiment * 0.5;
-    const rightScore = rightChange + rightSentiment * 0.5;
-    
-    if (leftScore > rightScore) {
-        winner = leftTicker;
-        reason = leftChange > rightChange ? 
-            `Better price performance (+${leftChange}% vs ${rightChange}%)` : 
-            `Stronger market sentiment (${leftSentiment}% vs ${rightSentiment}%)`;
-    } else if (rightScore > leftScore) {
-        winner = rightTicker;
-        reason = rightChange > leftChange ? 
-            `Better price performance (+${rightChange}% vs ${leftChange}%)` : 
-            `Stronger market sentiment (${rightSentiment}% vs ${leftSentiment}%)`;
-    } else {
-        winner = "Tie";
-        reason = "Both stocks are performing equally";
-    }
-    
-    document.getElementById('winner-ticker').textContent = winner;
-    document.getElementById('winner-reason').textContent = reason;
-    
-    // Highlight winner
-    document.querySelector('.left-side').classList.remove('winner');
-    document.querySelector('.right-side').classList.remove('winner');
-    
-    if (winner === leftTicker) {
-        document.querySelector('.left-side').classList.add('winner');
-    } else if (winner === rightTicker) {
-        document.querySelector('.right-side').classList.add('winner');
-    }
-}
-// Add to main.js
-// Parallel Interaction Mode
-let parallelChart1 = null;
-let parallelChart2 = null;
+// Parallel mode
+let parallelChartLeft = null;
+let parallelChartRight = null;
 let parallelData1 = null;
 let parallelData2 = null;
 let parallelTimeRange = 30; // Default: 1 month
 
 function initParallelMode() {
-    // Set up toggle button
-    document.getElementById('parallel-mode-toggle').addEventListener('click', function() {
-        document.getElementById('parallel-mode-container').classList.add('active');
-        initParallelCharts();
-    });
+    // Set up toggle button for parallel mode
+    const parallelModeToggle = document.getElementById('parallel-mode-toggle');
+    if (parallelModeToggle) {
+        parallelModeToggle.addEventListener('click', function() {
+            const container = document.getElementById('parallel-mode-container');
+            if (container) {
+                container.classList.add('active');
+                initParallelCharts();
+            }
+        });
+    }
     
-    // Close button
-    document.getElementById('close-parallel-mode').addEventListener('click', function() {
-        document.getElementById('parallel-mode-container').classList.remove('active');
-    });
+    // Close button for parallel mode
+    const closeParallelBtn = document.getElementById('close-parallel-mode');
+    if (closeParallelBtn) {
+        closeParallelBtn.addEventListener('click', function() {
+            const container = document.getElementById('parallel-mode-container');
+            if (container) {
+                container.classList.remove('active');
+            }
+        });
+    }
     
     // Search buttons
-    document.getElementById('parallel-search-1').addEventListener('click', function() {
-        loadParallelStock(1, document.getElementById('parallel-ticker-1').value);
-    });
+    const parallelSearch1 = document.getElementById('parallel-search-1');
+    if (parallelSearch1) {
+        parallelSearch1.addEventListener('click', function() {
+            const ticker = document.getElementById('parallel-ticker-1').value;
+            if (ticker) {
+                loadParallelStock(1, ticker);
+            }
+        });
+    }
     
-    document.getElementById('parallel-search-2').addEventListener('click', function() {
-        loadParallelStock(2, document.getElementById('parallel-ticker-2').value);
-    });
+    const parallelSearch2 = document.getElementById('parallel-search-2');
+    if (parallelSearch2) {
+        parallelSearch2.addEventListener('click', function() {
+            const ticker = document.getElementById('parallel-ticker-2').value;
+            if (ticker) {
+                loadParallelStock(2, ticker);
+            }
+        });
+    }
     
     // Enter key for search
-    document.getElementById('parallel-ticker-1').addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') {
-            loadParallelStock(1, this.value);
-        }
-    });
+    const parallelTicker1 = document.getElementById('parallel-ticker-1');
+    if (parallelTicker1) {
+        parallelTicker1.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                loadParallelStock(1, this.value);
+            }
+        });
+    }
     
-    document.getElementById('parallel-ticker-2').addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') {
-            loadParallelStock(2, this.value);
-        }
-    });
+    const parallelTicker2 = document.getElementById('parallel-ticker-2');
+    if (parallelTicker2) {
+        parallelTicker2.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                loadParallelStock(2, this.value);
+            }
+        });
+    }
     
     // Time period buttons
     document.querySelectorAll('.parallel-time').forEach(btn => {
@@ -1708,7 +1858,13 @@ function initParallelMode() {
     });
 }
 
+// Initialize parallel charts
 function initParallelCharts() {
+    if (typeof ApexCharts === 'undefined') {
+        console.error("ApexCharts is not loaded");
+        return;
+    }
+    
     const chartOptions = {
         chart: {
             height: 300,
@@ -1753,55 +1909,65 @@ function initParallelCharts() {
     };
     
     // Initialize chart 1
-    if (parallelChart1) {
-        parallelChart1.destroy();
-    }
-    
-    parallelChart1 = new ApexCharts(
-        document.getElementById('parallel-chart-1'),
-        {
-            ...chartOptions,
-            colors: ['#3b82f6'],
-            series: [{
-                name: 'Stock Price',
-                data: []
-            }]
+    const chart1El = document.getElementById('parallel-chart-1');
+    if (chart1El) {
+        if (parallelChartLeft) {
+            parallelChartLeft.destroy();
         }
-    );
-    parallelChart1.render();
+        
+        parallelChartLeft = new ApexCharts(
+            chart1El,
+            {
+                ...chartOptions,
+                colors: ['#3b82f6'],
+                series: [{
+                    name: 'Stock Price',
+                    data: []
+                }]
+            }
+        );
+        parallelChartLeft.render();
+    }
     
     // Initialize chart 2
-    if (parallelChart2) {
-        parallelChart2.destroy();
-    }
-    
-    parallelChart2 = new ApexCharts(
-        document.getElementById('parallel-chart-2'),
-        {
-            ...chartOptions,
-            colors: ['#ef4444'],
-            series: [{
-                name: 'Stock Price',
-                data: []
-            }]
+    const chart2El = document.getElementById('parallel-chart-2');
+    if (chart2El) {
+        if (parallelChartRight) {
+            parallelChartRight.destroy();
         }
-    );
-    parallelChart2.render();
+        
+        parallelChartRight = new ApexCharts(
+            chart2El,
+            {
+                ...chartOptions,
+                colors: ['#ef4444'],
+                series: [{
+                    name: 'Stock Price',
+                    data: []
+                }]
+            }
+        );
+        parallelChartRight.render();
+    }
 }
 
+// Load parallel stock data
 function loadParallelStock(user, ticker) {
     if (!ticker) return;
     
     ticker = ticker.toUpperCase();
     
     // Show loading state
-    document.getElementById(`parallel-chart-${user}`).innerHTML = `
-        <div class="parallel-loading">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+    const chartEl = document.getElementById(`parallel-chart-${user}`);
+    if (chartEl) {
+        chartEl.innerHTML = `
+            <div class="parallel-loading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    }
     
     fetch(`/api/stock_data?ticker=${ticker}`)
         .then(response => response.json())
@@ -1825,8 +1991,15 @@ function loadParallelStock(user, ticker) {
             if (data.length > 0) {
                 const latestData = data[data.length - 1];
                 
-                document.getElementById(`parallel-name-${user}`).textContent = `${companyInfo.name} (${ticker})`;
-                document.getElementById(`parallel-price-${user}`).textContent = `$${parseFloat(latestData.close).toFixed(2)}`;
+                const nameEl = document.getElementById(`parallel-name-${user}`);
+                if (nameEl) {
+                    nameEl.textContent = `${companyInfo.name} (${ticker})`;
+                }
+                
+                const priceEl = document.getElementById(`parallel-price-${user}`);
+                if (priceEl) {
+                    priceEl.textContent = `$${parseFloat(latestData.close).toFixed(2)}`;
+                }
                 
                 // Calculate change
                 if (data.length > 1) {
@@ -1835,8 +2008,10 @@ function loadParallelStock(user, ticker) {
                     const percentChange = (change / parseFloat(previousData.close)) * 100;
                     
                     const changeElement = document.getElementById(`parallel-change-${user}`);
-                    changeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)} (${percentChange.toFixed(2)}%)`;
-                    changeElement.className = change >= 0 ? 'parallel-change positive' : 'parallel-change negative';
+                    if (changeElement) {
+                        changeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)} (${percentChange.toFixed(2)}%)`;
+                        changeElement.className = change >= 0 ? 'parallel-change positive' : 'parallel-change negative';
+                    }
                 }
             }
             
@@ -1845,31 +2020,38 @@ function loadParallelStock(user, ticker) {
         })
         .catch(error => {
             console.error(`Error loading parallel stock ${ticker}:`, error);
-            document.getElementById(`parallel-chart-${user}`).innerHTML = `
-                <div class="parallel-error">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p>Failed to load stock data</p>
-                </div>
-            `;
+            const chartEl = document.getElementById(`parallel-chart-${user}`);
+            if (chartEl) {
+                chartEl.innerHTML = `
+                    <div class="parallel-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Failed to load stock data</p>
+                    </div>
+                `;
+            }
         });
 }
 
+// Update parallel charts
 function updateParallelCharts() {
     // Update chart 1
-    if (parallelData1 && parallelChart1) {
-        updateParallelChart(parallelChart1, parallelData1, 1);
+    if (parallelData1 && parallelChartLeft) {
+        updateParallelChart(parallelChartLeft, parallelData1, 1);
     }
     
     // Update chart 2
-    if (parallelData2 && parallelChart2) {
-        updateParallelChart(parallelChart2, parallelData2, 2);
+    if (parallelData2 && parallelChartRight) {
+        updateParallelChart(parallelChartRight, parallelData2, 2);
     }
     
     // Compare performance if both stocks are loaded
     compareStocks();
 }
 
+// Update parallel chart
 function updateParallelChart(chart, stockData, user) {
+    if (!chart || !stockData || !stockData.data) return;
+    
     const today = new Date();
     const startDate = new Date();
     startDate.setDate(today.getDate() - parallelTimeRange);
@@ -1893,6 +2075,7 @@ function updateParallelChart(chart, stockData, user) {
     }]);
 }
 
+// Compare stocks
 function compareStocks() {
     if (!parallelData1 || !parallelData2) return;
     
@@ -1924,19 +2107,21 @@ function compareStocks() {
     
     // Determine winner
     const winnerElement = document.getElementById('parallel-winner');
-    
-    if (stock1Change > stock2Change) {
-        winnerElement.textContent = `${parallelData1.ticker} (+${stock1Change.toFixed(2)}%)`;
-        winnerElement.className = 'winner-badge user1-winner';
-    } else if (stock2Change > stock1Change) {
-        winnerElement.textContent = `${parallelData2.ticker} (+${stock2Change.toFixed(2)}%)`;
-        winnerElement.className = 'winner-badge user2-winner';
-    } else {
-        winnerElement.textContent = 'Tie';
-        winnerElement.className = 'winner-badge tie';
+    if (winnerElement) {
+        if (stock1Change > stock2Change) {
+            winnerElement.textContent = `${parallelData1.ticker} (+${stock1Change.toFixed(2)}%)`;
+            winnerElement.className = 'winner-badge user1-winner';
+        } else if (stock2Change > stock1Change) {
+            winnerElement.textContent = `${parallelData2.ticker} (+${stock2Change.toFixed(2)}%)`;
+            winnerElement.className = 'winner-badge user2-winner';
+        } else {
+            winnerElement.textContent = 'Tie';
+            winnerElement.className = 'winner-badge tie';
+        }
     }
 }
 
+// Get company info
 function getCompanyInfo(ticker) {
     // Company mapping data
     const companyInfo = {
@@ -1980,13 +2165,7 @@ function getCompanyInfo(ticker) {
     };
 }
 
-// Initialize parallel mode when document is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Other initializations...
-    initParallelMode();
-});
-
-// Text to speech functionality
+// Initialize text-to-speech
 function initTextToSpeech() {
     // Add TTS buttons to chart sections
     document.querySelectorAll('.card-header').forEach(header => {
@@ -2000,22 +2179,28 @@ function initTextToSpeech() {
             
             // Get appropriate content based on section
             if (cardTitle.includes('Price History')) {
-                const ticker = document.getElementById('company-name').textContent;
-                const price = document.getElementById('stock-price').textContent;
-                const change = document.getElementById('price-change').textContent;
-                textToRead += `Current price for ${ticker} is ${price}, ${change}.`;
+                const ticker = document.getElementById('company-name');
+                const price = document.getElementById('stock-price');
+                const change = document.getElementById('price-change');
+                if (ticker && price && change) {
+                    textToRead += `Current price for ${ticker.textContent} is ${price.textContent}, ${change.textContent}.`;
+                }
             } else if (cardTitle.includes('Sentiment')) {
-                const bullish = document.getElementById('bullish-score').textContent;
-                const sector = document.getElementById('sector-score').textContent;
-                textToRead += `Bullish sentiment is ${bullish}, compared to sector average of ${sector}.`;
+                const bullish = document.getElementById('bullish-score');
+                const sector = document.getElementById('sector-score');
+                if (bullish && sector) {
+                    textToRead += `Bullish sentiment is ${bullish.textContent}, compared to sector average of ${sector.textContent}.`;
+                }
             } else if (cardTitle.includes('News')) {
                 const newsItems = document.querySelectorAll('.news-item');
                 if (newsItems.length > 0) {
                     textToRead += `Here are the top ${Math.min(3, newsItems.length)} news headlines. `;
                     for (let i = 0; i < Math.min(3, newsItems.length); i++) {
-                        const title = newsItems[i].querySelector('.news-title').textContent;
-                        const source = newsItems[i].querySelector('.news-source').textContent;
-                        textToRead += `${title}. From ${source}. `;
+                        const title = newsItems[i].querySelector('.news-title');
+                        const source = newsItems[i].querySelector('.news-source');
+                        if (title && source) {
+                            textToRead += `${title.textContent}. From ${source.textContent}. `;
+                        }
                     }
                 } else {
                     textToRead += "No recent news found.";
@@ -2029,15 +2214,31 @@ function initTextToSpeech() {
     });
 }
 
-// Read news aloud function
-function readNewsAloud(newsItem) {
-    const title = newsItem.querySelector('.news-title').textContent;
-    const source = newsItem.querySelector('.news-source').textContent;
-    const text = `${title}. From ${source}.`;
-    speak(text);
+// Functions to be defined elsewhere
+// These functions are referenced but not defined in the provided code
+// Add empty implementations to prevent errors
+
+function updateCompanyLogo(ticker) {
+    console.log(`Updating company logo for ${ticker}`);
+    // Implementation would go here
 }
 
-// Initialize TTS
-document.addEventListener('DOMContentLoaded', function() {
-    initTextToSpeech();
-});
+function updateCompanyInfo(ticker, data) {
+    console.log(`Updating company info for ${ticker}`);
+    // Implementation would go here
+}
+
+function initPriceChart(data) {
+    console.log("Initializing price chart");
+    // Implementation would go here
+}
+
+function updateChartTimeRange(days) {
+    console.log(`Updating chart time range to ${days} days`);
+    // Implementation would go here
+}
+
+function toggleChartType(type) {
+    console.log(`Toggling chart type to ${type}`);
+    // Implementation would go here
+}
