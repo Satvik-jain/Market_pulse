@@ -782,24 +782,24 @@ const tourSteps = [
         element: ".sentiment-card",
         position: "right"
     },
-    {
-        title: "Key Metrics",
-        content: "These metrics help you understand the stock's financial health at a glance.",
-        element: ".metrics-card",
-        position: "right"
-    },
-    {
-        title: "Latest News",
-        content: "Stay updated with the latest news about the company, with sentiment indicators.",
-        element: ".news-card",
-        position: "top"
-    },
-    {
-        title: "That's it!",
-        content: "You're ready to explore Market Pulse. Remember, I'm always here if you need help!",
-        element: ".theme-toggle",
-        position: "bottom"
-    }
+    // {
+    //     title: "Key Metrics",
+    //     content: "These metrics help you understand the stock's financial health at a glance.",
+    //     element: ".metrics-card",
+    //     position: "right"
+    // },
+    // {
+    //     title: "Latest News",
+    //     content: "Stay updated with the latest news about the company, with sentiment indicators.",
+    //     element: ".news-card",
+    //     position: "top"
+    // },
+    // {
+    //     title: "That's it!",
+    //     content: "You're ready to explore Market Pulse. Remember, I'm always here if you need help!",
+    //     element: ".theme-toggle",
+    //     position: "bottom"
+    // }
 ];
 
 function initStoryMode() {
