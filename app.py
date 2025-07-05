@@ -16,9 +16,10 @@ cache = {}
 cache_duration = 300  # 5 minutes
 
 # API keys - these are placeholders, but the app will work even if APIs are down
-ALPHAVANTAGE_API_KEY = "demo"  
-NEWS_API_KEY = "demo"
-FINNHUB_API_KEY = "demo"
+
+ALPHAVANTAGE_API_KEY = "ORRBTEBWNMRKM9JY"  
+NEWS_API_KEY = "86faaf4a4ee8490cade873e97b4721d3"
+FINNHUB_API_KEY = "d1k2a31r01ql1h3a7gjgd1k2a31r01ql1h3a7gk0"
 
 # Define helper functions first
 def generate_mock_stock_data(ticker, days=365):
