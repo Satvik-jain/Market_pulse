@@ -19,76 +19,6 @@
 </head>
 <body>
     <!-- Top navigation bar -->
-     <!-- Add to navbar -->
-<button id="enable-parallel" class="btn btn-sm ms-2">
-    <i class="fas fa-users me-1"></i> Dual Mode
-</button>
-
-<!-- Parallel mode overlay -->
-<div id="parallel-mode" class="parallel-mode">
-    <div class="parallel-container">
-        <div class="parallel-header">
-            <h4>Dual User Mode</h4>
-            <button id="close-parallel" class="btn-close"></button>
-        </div>
-        <div class="parallel-content">
-            <div class="parallel-side left-side">
-                <div class="parallel-user">User 1</div>
-                <div class="parallel-controls">
-                    <input type="text" class="form-control" id="ticker-left" placeholder="Enter ticker...">
-                    <button class="btn search-btn" id="search-left">Search</button>
-                </div>
-                <div class="parallel-chart" id="chart-left"></div>
-                <div class="parallel-metrics">
-                    <div class="metric-box">
-                        <div class="metric-title">Price</div>
-                        <div class="metric-value" id="price-left">$0.00</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-title">Change</div>
-                        <div class="metric-value" id="change-left">0.00%</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-title">Sentiment</div>
-                        <div class="metric-value" id="sentiment-left">0%</div>
-                    </div>
-                </div>
-            </div>
-            <div class="parallel-divider">
-                <div class="vs-badge">VS</div>
-            </div>
-            <div class="parallel-side right-side">
-                <div class="parallel-user">User 2</div>
-                <div class="parallel-controls">
-                    <input type="text" class="form-control" id="ticker-right" placeholder="Enter ticker...">
-                    <button class="btn search-btn" id="search-right">Search</button>
-                </div>
-                <div class="parallel-chart" id="chart-right"></div>
-                <div class="parallel-metrics">
-                    <div class="metric-box">
-                        <div class="metric-title">Price</div>
-                        <div class="metric-value" id="price-right">$0.00</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-title">Change</div>
-                        <div class="metric-value" id="change-right">0.00%</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-title">Sentiment</div>
-                        <div class="metric-value" id="sentiment-right">0%</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="parallel-footer">
-            <div class="winner-section" id="winner-section">
-                <div class="winner-title">Today's Winner:</div>
-                <div class="winner-ticker" id="winner-ticker">-</div>
-                <div class="winner-reason" id="winner-reason">Compare stocks to see the winner</div>
-            </div>
-        </div>
-    </div>
-</div>
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container-fluid px-4">
             <a class="navbar-brand d-flex align-items-center" href="/">
@@ -116,10 +46,82 @@
                 </ul>
                 
                 <div class="d-flex align-items-center">
+                    <!-- Accessibility Controls -->
+                    <div class="accessibility-controls me-3">
+                        <button class="btn accessibility-toggle" id="accessibility-toggle" title="Accessibility Options">
+                            <i class="fas fa-universal-access"></i>
+                        </button>
+                        
+                        <div class="accessibility-panel" id="accessibility-panel">
+                            <h5>Accessibility Options</h5>
+                            
+                            <div class="a11y-option">
+                                <label>Voice Navigation</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="voice-navigation-toggle">
+                                </div>
+                            </div>
+                            
+                            <div class="a11y-option">
+                                <label>Text-to-Speech</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="text-to-speech-toggle">
+                                </div>
+                            </div>
+                            
+                            <div class="a11y-option">
+                                <label>Color Blindness Mode</label>
+                                <select class="form-select form-select-sm" id="colorblind-mode">
+                                    <option value="normal">Normal</option>
+                                    <option value="protanopia">Protanopia</option>
+                                    <option value="deuteranopia">Deuteranopia</option>
+                                    <option value="tritanopia">Tritanopia</option>
+                                    <option value="achromatopsia">Achromatopsia</option>
+                                </select>
+                            </div>
+                            
+                            <div class="a11y-option">
+                                <label>Text Size</label>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-secondary" id="text-smaller">A-</button>
+                                    <button class="btn btn-sm btn-outline-secondary" id="text-reset">Reset</button>
+                                    <button class="btn btn-sm btn-outline-secondary" id="text-larger">A+</button>
+                                </div>
+                            </div>
+                            
+                            <button class="btn btn-sm btn-primary mt-3 w-100" id="screen-reader-btn">
+                                <i class="fas fa-volume-up me-2"></i>Read Page
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Language Selector -->
+                    <div class="language-selector dropdown me-3">
+                        <button class="btn dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-globe"></i>
+                            <span class="language-text">English</span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+                            <li><a class="dropdown-item" href="#" data-lang="en">English</a></li>
+                            <li><a class="dropdown-item" href="#" data-lang="es">Español</a></li>
+                            <li><a class="dropdown-item" href="#" data-lang="fr">Français</a></li>
+                            <li><a class="dropdown-item" href="#" data-lang="de">Deutsch</a></li>
+                            <li><a class="dropdown-item" href="#" data-lang="zh">中文</a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Parallel Mode Toggle -->
+                    <button id="parallel-mode-toggle" class="btn btn-sm me-3">
+                        <i class="fas fa-users me-1"></i> Dual Mode
+                    </button>
+                    
+                    <!-- Theme Toggle -->
                     <div class="theme-toggle me-3">
                         <i class="fas fa-sun light-icon"></i>
                         <i class="fas fa-moon dark-icon"></i>
                     </div>
+                    
+                    <!-- Stock Search -->
                     <div class="stock-search">
                         <div class="input-group">
                             <input type="text" id="ticker-input" class="form-control" placeholder="Enter ticker..." list="popular-tickers">
@@ -220,9 +222,15 @@
                     </div>
                     <div class="card-body">
                         <div id="price-chart"></div>
-                        <div class="chart-overlay loading-overlay">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
+                        <div class="loading-overlay">
+                            <div class="loading-content">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div class="loading-tip mt-3">
+                                    <h5>Stock Tip</h5>
+                                    <p id="loading-tip-text">Loading stock wisdom...</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -359,6 +367,100 @@
         </div>
     </footer>
 
+    <!-- Parallel mode UI -->
+    <div class="parallel-mode-container" id="parallel-mode-container">
+        <div class="parallel-mode-header">
+            <h4>Parallel Interaction Mode</h4>
+            <button class="btn-close" id="close-parallel-mode"></button>
+        </div>
+        
+        <div class="parallel-mode-content">
+            <div class="parallel-side left-side">
+                <div class="parallel-header">
+                    <h5>User 1</h5>
+                    <div class="parallel-search">
+                        <input type="text" class="form-control" placeholder="Enter ticker..." id="parallel-ticker-1">
+                        <button class="btn btn-primary" id="parallel-search-1">Search</button>
+                    </div>
+                </div>
+                <div class="parallel-chart-container" id="parallel-chart-1"></div>
+                <div class="parallel-stats">
+                    <div class="parallel-price"><span id="parallel-name-1">Select a stock</span></div>
+                    <div class="parallel-price"><span id="parallel-price-1">-</span></div>
+                    <div class="parallel-change" id="parallel-change-1">-</div>
+                </div>
+            </div>
+            
+            <div class="parallel-divider">
+                <div class="vs-badge">VS</div>
+            </div>
+            
+            <div class="parallel-side right-side">
+                <div class="parallel-header">
+                    <h5>User 2</h5>
+                    <div class="parallel-search">
+                        <input type="text" class="form-control" placeholder="Enter ticker..." id="parallel-ticker-2">
+                        <button class="btn btn-primary" id="parallel-search-2">Search</button>
+                    </div>
+                </div>
+                <div class="parallel-chart-container" id="parallel-chart-2"></div>
+                <div class="parallel-stats">
+                    <div class="parallel-price"><span id="parallel-name-2">Select a stock</span></div>
+                    <div class="parallel-price"><span id="parallel-price-2">-</span></div>
+                    <div class="parallel-change" id="parallel-change-2">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="parallel-mode-footer">
+            <div class="parallel-mode-timeframe">
+                <label>Time Period:</label>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-secondary parallel-time active" data-range="30">1M</button>
+                    <button class="btn btn-sm btn-outline-secondary parallel-time" data-range="90">3M</button>
+                    <button class="btn btn-sm btn-outline-secondary parallel-time" data-range="180">6M</button>
+                    <button class="btn btn-sm btn-outline-secondary parallel-time" data-range="365">1Y</button>
+                </div>
+            </div>
+            <div class="parallel-mode-competition">
+                <label>Current Leader:</label>
+                <span class="winner-badge" id="parallel-winner">-</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Story guide character -->
+    <div class="story-mode-container">
+        <div class="story-character">
+            <img src="static/img/guide-character.png" alt="Tour Guide" id="guide-character">
+            <div class="speech-bubble" id="guide-speech">
+                <p id="guide-text">Hi! I'm Stocky, your financial guide. Would you like a tour?</p>
+                <div class="guide-buttons">
+                    <button class="btn btn-sm btn-primary" id="start-tour-btn">Start Tour</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="skip-tour-btn">No Thanks</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tour Steps Overlay -->
+    <div class="tour-overlay" id="tour-overlay">
+        <div class="tour-highlight"></div>
+        <div class="tour-tooltip">
+            <div class="tour-tooltip-content">
+                <h5 class="tour-step-title">Welcome to Market Pulse</h5>
+                <p class="tour-step-content">This is your personal stock market dashboard!</p>
+            </div>
+            <div class="tour-nav">
+                <button class="btn btn-sm btn-outline-light tour-prev">Previous</button>
+                <div class="tour-progress">
+                    <span class="current-step">1</span>/<span class="total-steps">8</span>
+                </div>
+                <button class="btn btn-sm btn-primary tour-next">Next</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -369,5 +471,6 @@
         // Initialize animations
         AOS.init();
     </script>
+    
 </body>
 </html>

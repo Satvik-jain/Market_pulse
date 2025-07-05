@@ -506,11 +506,137 @@ function updateCompanyInfo(ticker, latestData) {
             return;
         }
         
-        // Rest of your existing function...
+        // Get company information
+        const companyName = getCompanyName(ticker);
+        const companyNameElement = document.getElementById('company-name');
+        if (companyNameElement) companyNameElement.textContent = companyName;
+        
+        // Update company logo
+        updateCompanyLogo(ticker);
+        
+        // Update current price
+        const stockPriceElement = document.getElementById('stock-price');
+        if (stockPriceElement) {
+            const price = parseFloat(latestData.close).toFixed(2);
+            stockPriceElement.textContent = `$${price}`;
+        }
+        
+        // Calculate price change
+        if (window.stockData && window.stockData.length > 1) {
+            const previousDay = window.stockData[window.stockData.length - 2];
+            const currentPrice = parseFloat(latestData.close);
+            const previousPrice = parseFloat(previousDay.close);
+            const priceChange = currentPrice - previousPrice;
+            const percentageChange = (priceChange / previousPrice) * 100;
+            
+            const priceChangeElement = document.getElementById('price-change');
+            if (priceChangeElement) {
+                priceChangeElement.textContent = `${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)} (${priceChange >= 0 ? '+' : ''}${percentageChange.toFixed(2)}%)`;
+                priceChangeElement.className = priceChange >= 0 ? 'change positive' : 'change negative';
+            }
+        }
+        
+        // Update key metrics based on the ticker
+        updateKeyMetrics(ticker, latestData);
+        
+        console.log("Company info updated for:", ticker);
     } catch (error) {
         console.error("Error updating company info:", error);
         showTickerError(ticker);
     }
+}
+
+// Helper function to get company name based on ticker
+function getCompanyName(ticker) {
+    const companies = {
+        'AAPL': 'Apple Inc.',
+        'MSFT': 'Microsoft Corporation',
+        'GOOGL': 'Alphabet Inc.',
+        'AMZN': 'Amazon.com, Inc.',
+        'META': 'Meta Platforms, Inc.',
+        'TSLA': 'Tesla, Inc.',
+        'NFLX': 'Netflix, Inc.',
+        'NVDA': 'NVIDIA Corporation',
+        'PYPL': 'PayPal Holdings, Inc.',
+        'INTC': 'Intel Corporation'
+    };
+    
+    return companies[ticker] || `${ticker} Stock`;
+}
+
+// Update key metrics with stock data
+function updateKeyMetrics(ticker, latestData) {
+    // Sample metrics data - in a real app, you would fetch this from your API
+    const metrics = {
+        'AAPL': {
+            sector: 'Technology',
+            exchange: 'NASDAQ',
+            pe: '28.5',
+            marketCap: '2.5T',
+            yearHigh: '$182.94',
+            yearLow: '$124.17',
+            avgVolume: '64.8M',
+            dividend: '0.92%',
+            beta: '1.28',
+            eps: '$6.15'
+        },
+        'MSFT': {
+            sector: 'Technology',
+            exchange: 'NASDAQ',
+            pe: '32.1',
+            marketCap: '2.3T',
+            yearHigh: '$349.67',
+            yearLow: '$213.43',
+            avgVolume: '26.5M',
+            dividend: '0.80%',
+            beta: '0.93',
+            eps: '$9.58'
+        },
+        'GOOGL': {
+            sector: 'Technology',
+            exchange: 'NASDAQ',
+            pe: '25.7',
+            marketCap: '1.7T',
+            yearHigh: '$153.78',
+            yearLow: '$83.34',
+            avgVolume: '23.7M',
+            dividend: '0%',
+            beta: '1.06',
+            eps: '$5.80'
+        }
+    };
+    
+    // Get metrics for this ticker or use default values
+    const stockMetrics = metrics[ticker] || {
+        sector: 'Unknown',
+        exchange: 'NYSE',
+        pe: 'N/A',
+        marketCap: 'N/A',
+        yearHigh: 'N/A',
+        yearLow: 'N/A',
+        avgVolume: 'N/A',
+        dividend: 'N/A',
+        beta: 'N/A',
+        eps: 'N/A'
+    };
+    
+    // Update metrics on the page
+    document.querySelectorAll('[data-metric]').forEach(element => {
+        const metric = element.getAttribute('data-metric');
+        if (stockMetrics[metric]) {
+            element.textContent = stockMetrics[metric];
+        }
+    });
+    
+    // Update volume if available from latest data
+    if (latestData.volume) {
+        const volumeElement = document.getElementById('volume-metric');
+        if (volumeElement) {
+            volumeElement.textContent = formatNumber(latestData.volume);
+        }
+    }
+    
+    console.log("Key metrics updated for:", ticker);
 }
 
 // Add this new function to display a nice error message

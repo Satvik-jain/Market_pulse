@@ -8,22 +8,42 @@ import random
 from textblob import TextBlob
 import pandas as pd
 import time
+import logging
+import re
 
 app = Flask(__name__)
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Cache to minimize API calls
 cache = {}
 cache_duration = 300  # 5 minutes
+CACHE_CLEANUP_INTERVAL = 3600  # Clean up stale cache entries every hour
+last_cleanup = datetime.datetime.now()
 
 # API keys - these are placeholders, but the app will work even if APIs are down
-
-ALPHAVANTAGE_API_KEY = "ORRBTEBWNMRKM9JY"  
-NEWS_API_KEY = "86faaf4a4ee8490cade873e97b4721d3"
-FINNHUB_API_KEY = "d1k2a31r01ql1h3a7gjgd1k2a31r01ql1h3a7gk0"
+# In production, these should be stored as environment variables
+ALPHAVANTAGE_API_KEY = os.environ.get("ALPHAVANTAGE_API_KEY", "ORRBTEBWNMRKM9JY")
+NEWS_API_KEY = os.environ.get("NEWS_API_KEY", "86faaf4a4ee8490cade873e97b4721d3")
+FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY", "d1k2a31r01ql1h3a7gjgd1k2a31r01ql1h3a7gk0")
 
 # Define helper functions first
 def generate_mock_stock_data(ticker, days=365):
-    """Generate realistic mock stock data for demo purposes"""
+    """
+    Generate realistic mock stock data for demo purposes
+    
+    Args:
+        ticker (str): Stock ticker symbol
+        days (int): Number of days of historical data to generate
+    
+    Returns:
+        list: List of dictionaries containing stock data
+    """
     data = []
     # Use different base prices for different tickers
     base_prices = {
@@ -83,7 +103,15 @@ def generate_mock_stock_data(ticker, days=365):
     return data
 
 def generate_mock_news(company_name):
-    """Generate mock news articles for demo purposes"""
+    """
+    Generate mock news articles for demo purposes
+    
+    Args:
+        company_name (str): Company name to generate news about
+    
+    Returns:
+        list: List of dictionaries containing news data
+    """
     news_templates = [
         "{company} Reports Quarterly Earnings Above Expectations",
         "{company} Announces New Product Line",
@@ -126,6 +154,95 @@ def generate_mock_news(company_name):
         })
     
     return articles
+
+def analyze_sentiment(text):
+    """
+    Analyze sentiment of text using TextBlob
+    
+    Args:
+        text (str): Text to analyze
+        
+    Returns:
+        dict: Dictionary with polarity and sentiment label
+    """
+    # Use TextBlob for sentiment analysis
+    analysis = TextBlob(text)
+    polarity = analysis.sentiment.polarity
+    
+    # Determine sentiment label
+    if polarity > 0.1:
+        label = "positive"
+    elif polarity < -0.1:
+        label = "negative"
+    else:
+        label = "neutral"
+    
+    return {
+        'polarity': polarity,
+        'label': label
+    }
+
+def get_company_name(ticker):
+    """
+    Get company name from ticker symbol
+    
+    Args:
+        ticker (str): Stock ticker symbol
+        
+    Returns:
+        str: Company name
+    """
+    # Map ticker to company name
+    company_map = {
+        'AAPL': 'Apple',
+        'MSFT': 'Microsoft',
+        'GOOGL': 'Google',
+        'AMZN': 'Amazon',
+        'META': 'Facebook',
+        'TSLA': 'Tesla',
+        'NVDA': 'NVIDIA',
+        'NFLX': 'Netflix',
+        'PYPL': 'PayPal',
+        'INTC': 'Intel'
+    }
+    return company_map.get(ticker, ticker)
+
+def clean_cache():
+    """
+    Remove expired cache entries to prevent memory bloat
+    """
+    global last_cleanup
+    now = datetime.datetime.now()
+    
+    # Only run cleanup if enough time has passed since last cleanup
+    if (now - last_cleanup).seconds < CACHE_CLEANUP_INTERVAL:
+        return
+    
+    logger.info("Cleaning up expired cache entries")
+    expired_keys = []
+    
+    for key, value in cache.items():
+        if (now - value['timestamp']).seconds > cache_duration:
+            expired_keys.append(key)
+    
+    for key in expired_keys:
+        del cache[key]
+    
+    logger.info(f"Removed {len(expired_keys)} expired cache entries")
+    last_cleanup = now
+
+def validate_ticker(ticker):
+    """
+    Validate ticker symbol format
+    
+    Args:
+        ticker (str): Stock ticker symbol
+        
+    Returns:
+        bool: True if valid format, False otherwise
+    """
+    # Basic validation - tickers are typically 1-5 uppercase letters
+    return bool(re.match(r'^[A-Z]{1,5}$', ticker))
 
 # Now define the mock data using the helper functions
 MOCK_DATA = {
@@ -277,23 +394,36 @@ MOCK_DATA = {
 
 @app.route('/')
 def index():
+    """Render the main dashboard page"""
     return render_template('index.html')
 
 @app.route('/about')
 def about():
+    """Render the about page"""
     return render_template('about.html')
 
 @app.route('/api/stock_data', methods=['GET'])
 def get_stock_data():
+    """API endpoint to get stock price history data"""
+    # Clean cache periodically
+    clean_cache()
+    
+    # Get and validate ticker
     ticker = request.args.get('ticker', 'AAPL').upper()
+    if not validate_ticker(ticker):
+        return jsonify({
+            'error': 'Invalid ticker symbol format'
+        }), 400
     
     # Check cache first
     cache_key = f"stock_data_{ticker}"
     if cache_key in cache and (datetime.datetime.now() - cache[cache_key]['timestamp']).seconds < cache_duration:
+        logger.info(f"Returning cached data for {ticker}")
         return jsonify(cache[cache_key]['data'])
     
     try:
         # Try to get real data from Alpha Vantage
+        logger.info(f"Fetching stock data for {ticker} from Alpha Vantage")
         url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={ticker}&apikey={ALPHAVANTAGE_API_KEY}"
         response = requests.get(url, timeout=5)
         stock_data = response.json()
@@ -319,7 +449,7 @@ def get_stock_data():
             raise Exception("No data from API")
             
     except Exception as e:
-        print(f"Error fetching stock data: {e}")
+        logger.warning(f"Error fetching stock data: {e}, falling back to mock data")
         # Fallback to mock data
         if ticker in MOCK_DATA:
             processed_data = MOCK_DATA[ticker]['stock_data']
@@ -337,16 +467,27 @@ def get_stock_data():
 
 @app.route('/api/company_news', methods=['GET'])
 def get_company_news():
+    """API endpoint to get company news and sentiment analysis"""
+    # Clean cache periodically
+    clean_cache()
+    
+    # Get and validate ticker
     ticker = request.args.get('ticker', 'AAPL').upper()
+    if not validate_ticker(ticker):
+        return jsonify({
+            'error': 'Invalid ticker symbol format'
+        }), 400
     
     # Check cache first
     cache_key = f"news_{ticker}"
     if cache_key in cache and (datetime.datetime.now() - cache[cache_key]['timestamp']).seconds < cache_duration:
+        logger.info(f"Returning cached news for {ticker}")
         return jsonify(cache[cache_key]['data'])
     
     try:
         # Try to get real data from News API
         company_name = get_company_name(ticker)
+        logger.info(f"Fetching news for {ticker} ({company_name}) from News API")
         url = f"https://newsapi.org/v2/everything?q={company_name}&apiKey={NEWS_API_KEY}&pageSize=10"
         response = requests.get(url, timeout=5)
         news_data = response.json()
@@ -355,7 +496,11 @@ def get_company_news():
         articles = []
         if 'articles' in news_data and len(news_data['articles']) > 0:
             for article in news_data['articles'][:10]:  # Limit to 10 articles
-                sentiment = analyze_sentiment(article['title'] + " " + (article['description'] or ""))
+                # Skip articles with missing data
+                if not article.get('title') or not article.get('source'):
+                    continue
+                
+                sentiment = analyze_sentiment(article['title'] + " " + (article.get('description') or ""))
                 articles.append({
                     'title': article['title'],
                     'source': article['source']['name'],
@@ -364,12 +509,13 @@ def get_company_news():
                     'sentiment': sentiment['polarity'],
                     'sentiment_label': sentiment['label']
                 })
-        else:
-            # If API call fails or no data, use mock data
-            raise Exception("No news data from API")
+        
+        if not articles:
+            # If API call returns no usable articles
+            raise Exception("No usable news data from API")
             
     except Exception as e:
-        print(f"Error fetching news: {e}")
+        logger.warning(f"Error fetching news: {e}, falling back to mock data")
         # Fallback to mock data
         if ticker in MOCK_DATA:
             articles = MOCK_DATA[ticker]['news']
@@ -385,17 +531,64 @@ def get_company_news():
     
     return jsonify(articles)
 
+@app.route('/api/validate_ticker', methods=['GET'])
+def validate_ticker_endpoint():
+    """API endpoint to validate if a ticker symbol exists"""
+    ticker = request.args.get('ticker', '').upper()
+    
+    if not ticker:
+        return jsonify({'valid': False, 'ticker': ticker}), 400
+    
+    if not validate_ticker(ticker):
+        return jsonify({'valid': False, 'ticker': ticker}), 400
+    
+    # List of known valid tickers
+    valid_tickers = set(['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'NFLX', 'PYPL', 'INTC'])
+    
+    # Check if it's in our known tickers or try to validate via API
+    is_valid = ticker in valid_tickers
+    
+    if not is_valid:
+        try:
+            # Try to get a real quote (very lightweight check)
+            logger.info(f"Validating ticker {ticker} with Alpha Vantage")
+            url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={ticker}&apikey={ALPHAVANTAGE_API_KEY}"
+            response = requests.get(url, timeout=3)
+            data = response.json()
+            
+            # If we got actual price data, it's valid
+            is_valid = '01. symbol' in data.get('Global Quote', {})
+        except Exception as e:
+            logger.warning(f"Error validating ticker {ticker}: {e}")
+            is_valid = False
+    
+    return jsonify({
+        'valid': is_valid,
+        'ticker': ticker
+    })
+
 @app.route('/api/stock_sentiment', methods=['GET'])
 def get_stock_sentiment():
+    """API endpoint to get stock sentiment analysis"""
+    # Clean cache periodically
+    clean_cache()
+    
+    # Get and validate ticker
     ticker = request.args.get('ticker', 'AAPL').upper()
+    if not validate_ticker(ticker):
+        return jsonify({
+            'error': 'Invalid ticker symbol format'
+        }), 400
     
     # Check cache first
     cache_key = f"sentiment_{ticker}"
     if cache_key in cache and (datetime.datetime.now() - cache[cache_key]['timestamp']).seconds < cache_duration:
+        logger.info(f"Returning cached sentiment for {ticker}")
         return jsonify(cache[cache_key]['data'])
     
     try:
         # Try to get real data from Finnhub
+        logger.info(f"Fetching sentiment for {ticker} from Finnhub")
         url = f"https://finnhub.io/api/v1/news-sentiment?symbol={ticker}&token={FINNHUB_API_KEY}"
         response = requests.get(url, timeout=5)
         sentiment_data = response.json()
@@ -412,7 +605,7 @@ def get_stock_sentiment():
             raise Exception("No sentiment data from API")
             
     except Exception as e:
-        print(f"Error fetching sentiment: {e}")
+        logger.warning(f"Error fetching sentiment: {e}, falling back to mock data")
         # Fallback to mock data
         if ticker in MOCK_DATA:
             result = MOCK_DATA[ticker]['sentiment']
@@ -432,39 +625,16 @@ def get_stock_sentiment():
     
     return jsonify(result)
 
-def get_company_name(ticker):
-    # Map ticker to company name
-    company_map = {
-        'AAPL': 'Apple',
-        'MSFT': 'Microsoft',
-        'GOOGL': 'Google',
-        'AMZN': 'Amazon',
-        'META': 'Facebook',
-        'TSLA': 'Tesla',
-        'NVDA': 'NVIDIA',
-        'NFLX': 'Netflix',
-        'PYPL': 'PayPal',
-        'INTC': 'Intel'
-    }
-    return company_map.get(ticker, ticker)
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Resource not found'}), 404
 
-def analyze_sentiment(text):
-    # Use TextBlob for sentiment analysis
-    analysis = TextBlob(text)
-    polarity = analysis.sentiment.polarity
-    
-    # Determine sentiment label
-    if polarity > 0.1:
-        label = "positive"
-    elif polarity < -0.1:
-        label = "negative"
-    else:
-        label = "neutral"
-    
-    return {
-        'polarity': polarity,
-        'label': label
-    }
+@app.errorhandler(500)
+def server_error(error):
+    return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Use environment variable PORT if available
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
