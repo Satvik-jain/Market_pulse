@@ -145,6 +145,59 @@ document.addEventListener('DOMContentLoaded', function() {
     initTextToSpeech();
 });
 
+function createTourElements() {
+    console.log("Creating tour elements");
+    
+    // Check if tour overlay exists, if not create it
+    if (!document.getElementById('tour-overlay')) {
+        console.log("Tour overlay not found, creating it");
+        const tourOverlay = document.createElement('div');
+        tourOverlay.id = 'tour-overlay';
+        tourOverlay.innerHTML = `
+            <div class="tour-highlight"></div>
+            <div class="tour-tooltip">
+                <div class="tour-step-title">Welcome!</div>
+                <div class="tour-step-content">Let me guide you through this dashboard.</div>
+                <div class="tour-nav">
+                    <button class="tour-prev">Previous</button>
+                    <div class="tour-progress">
+                        <span class="current-step">1</span>/<span class="total-steps">8</span>
+                    </div>
+                    <button class="tour-next">Next</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(tourOverlay);
+    } else {
+        console.log("Tour overlay already exists");
+    }
+    
+    // Check if story-mode container exists, if not create it
+    if (!document.querySelector('.story-mode-container')) {
+        console.log("Story mode container not found, creating it");
+        const storyModeContainer = document.createElement('div');
+        storyModeContainer.className = 'story-mode-container';
+        storyModeContainer.innerHTML = `
+            <div class="story-mode-content">
+                <div class="guide-character">
+                    <img src="/static/img/guide-character.png" alt="Guide" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0iIzNiODJmNiIgLz48dGV4dCB4PSI1MCIgeT0iNTUiIGZvbnQtc2l6ZT0iMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj5HdWlkZTwvdGV4dD48L3N2Zz4='" />
+                </div>
+                <div class="guide-message">
+                    <h3>Welcome to Market Pulse!</h3>
+                    <p>I'm here to help you navigate through this powerful stock analytics dashboard.</p>
+                    <div class="guide-actions">
+                        <button id="start-tour-btn" class="btn btn-primary">Start Tour</button>
+                        <button id="skip-tour-btn" class="btn btn-outline-secondary">Skip</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(storyModeContainer);
+    } else {
+        console.log("Story mode container already exists");
+    }
+}
+
 // Add color blindness filters to the DOM
 function addColorBlindnessFilters() {
     if (!document.getElementById('colorblind-filters')) {
@@ -429,6 +482,12 @@ function updateChartTheme(chart) {
 // Load stock data from API
 function loadStockData(ticker) {
     console.log("Loading stock data for:", ticker);
+    
+    // Show loading indicator
+    document.querySelectorAll('.loading-overlay').forEach(overlay => {
+        overlay.classList.add('active');
+    });
+    
     fetch(`/api/stock_data?ticker=${ticker}`)
         .then(response => {
             if (!response.ok) {
@@ -441,29 +500,48 @@ function loadStockData(ticker) {
                 // Save data globally
                 window.stockData = data;
                 
+                console.log("Stock data loaded successfully:", data.length, "data points");
+                
                 // Update company info
                 updateCompanyInfo(ticker, data[data.length-1]);
                 
-                // Initialize price chart
-                initPriceChart(data);
-                
-                // Set default time range to 90 days
-                updateChartTimeRange(90);
+                // Initialize price chart with a slight delay to ensure DOM is ready
+                setTimeout(() => {
+                    if (document.getElementById('price-chart')) {
+                        console.log("Initializing price chart");
+                        initPriceChart(data);
+                    } else {
+                        console.error("Price chart element not available");
+                    }
+                }, 100);
                 
                 // Update theme based on performance - moved inside where data is available
                 updateThemeBasedOnPerformance(data);
                 
-                // Hide loading overlay
+                // Hide loading overlay with a delay to ensure chart is rendered
+                setTimeout(() => {
+                    document.querySelectorAll('.loading-overlay').forEach(overlay => {
+                        overlay.classList.remove('active');
+                    });
+                }, 500);
+            } else {
+                console.error("No data available for ticker:", ticker);
+                showError(`No data available for ${ticker}`);
+                
+                // Hide loading overlays
                 document.querySelectorAll('.loading-overlay').forEach(overlay => {
                     overlay.classList.remove('active');
                 });
-            } else {
-                showError(`No data available for ${ticker}`);
             }
         })
         .catch(error => {
             console.error('Error fetching stock data:', error);
             showError('Failed to load stock data. Please try again.');
+            
+            // Hide loading overlays
+            document.querySelectorAll('.loading-overlay').forEach(overlay => {
+                overlay.classList.remove('active');
+            });
         });
 }
 
@@ -725,29 +803,28 @@ const tourSteps = [
 ];
 
 function initStoryMode() {
+    console.log("Initializing story mode");
+    
+    // Ensure tour elements exist first
+    createTourElements();
+    
     // Check if first-time visitor
     const hasVisited = localStorage.getItem('hasVisitedBefore');
     
     if (!hasVisited) {
+        console.log("First-time visitor detected, showing tour prompt");
         // Show character after a short delay
         setTimeout(() => {
             const storyContainer = document.querySelector('.story-mode-container');
             if (storyContainer) {
                 storyContainer.classList.add('active');
+                console.log("Story mode container activated");
+            } else {
+                console.error("Story mode container not found");
             }
         }, 1500);
-        
-        // Set up event listeners
-        const startTourBtn = document.getElementById('start-tour-btn');
-        if (startTourBtn) {
-            startTourBtn.addEventListener('click', startTour);
-        }
-        
-        const skipTourBtn = document.getElementById('skip-tour-btn');
-        if (skipTourBtn) {
-            skipTourBtn.addEventListener('click', skipTour);
-        }
     } else {
+        console.log("Returning visitor detected");
         // Add help button for returning visitors
         const navbar = document.querySelector('.navbar-nav');
         if (navbar && !document.getElementById('help-button')) {
@@ -763,35 +840,87 @@ function initStoryMode() {
             // Add event listener to help button
             document.getElementById('help-button').addEventListener('click', function(e) {
                 e.preventDefault();
-                document.querySelector('.story-mode-container').classList.add('active');
+                const storyContainer = document.querySelector('.story-mode-container');
+                if (storyContainer) {
+                    storyContainer.classList.add('active');
+                }
             });
         }
+    }
+    
+    // Set up tour button event listeners
+    const startTourBtn = document.getElementById('start-tour-btn');
+    if (startTourBtn) {
+        startTourBtn.addEventListener('click', function() {
+            console.log("Start tour button clicked");
+            startTour();
+        });
+    } else {
+        console.error("Start tour button not found");
+    }
+    
+    const skipTourBtn = document.getElementById('skip-tour-btn');
+    if (skipTourBtn) {
+        skipTourBtn.addEventListener('click', function() {
+            console.log("Skip tour button clicked");
+            skipTour();
+        });
+    } else {
+        console.error("Skip tour button not found");
     }
     
     // Set up tour navigation
     const tourNext = document.querySelector('.tour-next');
     if (tourNext) {
-        tourNext.addEventListener('click', nextTourStep);
+        tourNext.addEventListener('click', function() {
+            console.log("Next tour step button clicked");
+            nextTourStep();
+        });
+    } else {
+        console.error("Tour next button not found");
     }
     
     const tourPrev = document.querySelector('.tour-prev');
     if (tourPrev) {
-        tourPrev.addEventListener('click', prevTourStep);
+        tourPrev.addEventListener('click', function() {
+            console.log("Previous tour step button clicked");
+            prevTourStep();
+        });
+    } else {
+        console.error("Tour prev button not found");
     }
 }
 
 function startTour() {
+    console.log("Starting tour");
+    
+    // Hide story mode container
     const storyContainer = document.querySelector('.story-mode-container');
     if (storyContainer) {
         storyContainer.classList.remove('active');
     }
     
+    // Reset to the first step
     currentTourStep = 0;
+    
+    // Show the first step
     showTourStep(currentTourStep);
     
+    // Make tour overlay visible
     const tourOverlay = document.getElementById('tour-overlay');
     if (tourOverlay) {
         tourOverlay.classList.add('active');
+        console.log("Tour overlay activated");
+    } else {
+        console.error("Tour overlay element not found");
+        // Try to create it again and then activate
+        createTourElements();
+        setTimeout(() => {
+            const newTourOverlay = document.getElementById('tour-overlay');
+            if (newTourOverlay) {
+                newTourOverlay.classList.add('active');
+            }
+        }, 100);
     }
 }
 
@@ -804,27 +933,51 @@ function skipTour() {
 }
 
 function showTourStep(stepIndex) {
-    if (stepIndex < 0 || stepIndex >= tourSteps.length) return;
+    console.log("Showing tour step:", stepIndex);
+    
+    if (stepIndex < 0 || stepIndex >= tourSteps.length) {
+        console.warn("Invalid tour step index:", stepIndex);
+        return;
+    }
     
     const step = tourSteps[stepIndex];
     const targetElement = document.querySelector(step.element);
     
     if (!targetElement) {
-        console.warn(`Tour target element not found: ${step.element}`);
-        // Skip to next step if element not found
-        nextTourStep();
+        console.error(`Tour target element not found: ${step.element}`);
+        
+        // Try to wait a bit if it's the first step - element might not be ready yet
+        if (stepIndex === 0) {
+            setTimeout(() => {
+                const retryElement = document.querySelector(step.element);
+                if (retryElement) {
+                    showTourStep(stepIndex);
+                } else {
+                    // Skip to next step if element still not found
+                    nextTourStep();
+                }
+            }, 1000);
+        } else {
+            // Skip to next step if element not found
+            nextTourStep();
+        }
+        return;
+    }
+    
+    // Get tour overlay elements
+    const highlight = document.querySelector('.tour-highlight');
+    const tooltip = document.querySelector('.tour-tooltip');
+    
+    if (!highlight || !tooltip) {
+        console.error("Tour highlight or tooltip elements missing");
+        // Try to recreate tour elements
+        createTourElements();
+        setTimeout(() => showTourStep(stepIndex), 100);
         return;
     }
     
     // Get element position
     const rect = targetElement.getBoundingClientRect();
-    const highlight = document.querySelector('.tour-highlight');
-    const tooltip = document.querySelector('.tour-tooltip');
-    
-    if (!highlight || !tooltip) {
-        console.error('Tour highlight or tooltip elements missing');
-        return;
-    }
     
     // Position highlight
     highlight.style.width = `${rect.width + 20}px`;
@@ -853,6 +1006,9 @@ function showTourStep(stepIndex) {
             tooltipLeft = rect.right + 20;
             tooltipTop = rect.top + rect.height/2 - 75 + window.scrollY;
             break;
+        default:
+            tooltipLeft = rect.right + 20;
+            tooltipTop = rect.top + window.scrollY;
     }
     
     // Keep tooltip within viewport
@@ -888,7 +1044,10 @@ function showTourStep(stepIndex) {
         top: Math.max(0, rect.top + window.scrollY - 100),
         behavior: 'smooth'
     });
+    
+    console.log("Tour step shown successfully:", stepIndex);
 }
+
 
 function nextTourStep() {
     currentTourStep++;

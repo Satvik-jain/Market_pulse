@@ -6,10 +6,42 @@ window.candleChart = null;
 window.stockData = [];
 window.chartType = 'line';
 
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Charts.js loaded and ready");
+    
+    // Check if required elements exist
+    const priceChartEl = document.getElementById('price-chart');
+    if (priceChartEl) {
+        console.log("Price chart element found in DOM");
+    } else {
+        console.error("Price chart element not found in DOM");
+    }
+    
+    // Global chart initialization check
+    window.chartInitialized = false;
+});
+
 // Initialize price chart with ApexCharts
 function initPriceChart(stockData) {
+    console.log("initPriceChart called with data:", stockData ? stockData.length : "no data");
+    
     // Store the full dataset globally
     window.stockData = stockData;
+    
+    // Check if price chart element exists
+    const priceChartEl = document.getElementById('price-chart');
+    if (!priceChartEl) {
+        console.error("Price chart element not found");
+        return;
+    }
+    
+    // Check if ApexCharts is loaded
+    if (typeof ApexCharts === 'undefined') {
+        console.error("ApexCharts library not loaded");
+        fallbackChartInit();
+        return;
+    }
     
     const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
     const textColor = isDark ? '#d1d5db' : '#6c757d';
@@ -158,20 +190,6 @@ function initPriceChart(stockData) {
 
     // Initialize ApexCharts
     try {
-        // Check if the price-chart element exists
-        const priceChartEl = document.getElementById('price-chart');
-        if (!priceChartEl) {
-            console.error("Price chart element not found");
-            return;
-        }
-        
-        // Check if ApexCharts is loaded
-        if (typeof ApexCharts === 'undefined') {
-            console.error("ApexCharts library not loaded");
-            fallbackChartInit();
-            return;
-        }
-        
         // If charts already exist, destroy them
         if (window.priceChart) {
             window.priceChart.destroy();
@@ -187,12 +205,14 @@ function initPriceChart(stockData) {
         // Create but don't render candlestick chart yet
         window.candleChart = new ApexCharts(priceChartEl, candleOptions);
         
-        // Set initial time range (default to 90 days)
+        console.log("Chart initialization completed successfully");
+        window.chartInitialized = true;
+        
+        // Set initial time range after a small delay to ensure chart is ready
         setTimeout(() => {
             updateChartTimeRange(90);
-        }, 100);
+        }, 200);
         
-        console.log("Chart initialized successfully");
     } catch (error) {
         console.error("Error initializing chart:", error);
         fallbackChartInit();
