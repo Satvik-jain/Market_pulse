@@ -422,3 +422,308 @@ setTimeout(function() {
     const event = new CustomEvent('dataLoaded');
     document.dispatchEvent(event);
 }, 1000);
+
+
+// Parallel interaction mode
+let parallelChartLeft;
+let parallelChartRight;
+
+// Initialize parallel mode
+document.getElementById('enable-parallel').addEventListener('click', function() {
+    document.getElementById('parallel-mode').classList.add('active');
+    initParallelMode();
+});
+
+document.getElementById('close-parallel').addEventListener('click', function() {
+    document.getElementById('parallel-mode').classList.remove('active');
+});
+
+function initParallelMode() {
+    // Initialize left side
+    document.getElementById('search-left').addEventListener('click', function() {
+        const ticker = document.getElementById('ticker-left').value.trim().toUpperCase();
+        if (ticker) {
+            loadParallelStockData(ticker, 'left');
+        }
+    });
+    
+    document.getElementById('ticker-left').addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') {
+            document.getElementById('search-left').click();
+        }
+    });
+    
+    // Initialize right side
+    document.getElementById('search-right').addEventListener('click', function() {
+        const ticker = document.getElementById('ticker-right').value.trim().toUpperCase();
+        if (ticker) {
+            loadParallelStockData(ticker, 'right');
+        }
+    });
+    
+    document.getElementById('ticker-right').addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') {
+            document.getElementById('search-right').click();
+        }
+    });
+    
+    // Load default tickers
+    document.getElementById('ticker-left').value = 'AAPL';
+    document.getElementById('ticker-right').value = 'MSFT';
+    
+    document.getElementById('search-left').click();
+    document.getElementById('search-right').click();
+}
+
+function loadParallelStockData(ticker, side) {
+    fetch(`/api/stock_data?ticker=${ticker}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                updateParallelChart(data, side);
+                
+                // Get sentiment data
+                fetch(`/api/stock_sentiment?ticker=${ticker}`)
+                    .then(response => response.json())
+                    .then(sentimentData => {
+                        updateParallelSentiment(sentimentData, side, ticker);
+                    })
+                    .catch(error => {
+                        console.error(`Error fetching sentiment data for ${side}:`, error);
+                    });
+            }
+        })
+        .catch(error => {
+            console.error(`Error fetching stock data for ${side}:`, error);
+        });
+}
+
+function updateParallelChart(data, side) {
+    const chartElement = document.getElementById(`chart-${side}`);
+    const priceElement = document.getElementById(`price-${side}`);
+    const changeElement = document.getElementById(`change-${side}`);
+    
+    // Calculate price and change
+    const latestData = data[data.length - 1];
+    const previousData = data[data.length - 2];
+    
+    const price = parseFloat(latestData.close).toFixed(2);
+    priceElement.textContent = `$${price}`;
+    
+    // Calculate change
+    if (previousData) {
+        const change = parseFloat(latestData.close) - parseFloat(previousData.close);
+        const percentChange = (change / parseFloat(previousData.close) * 100).toFixed(2);
+        
+        changeElement.textContent = `${change >= 0 ? '+' : ''}${percentChange}%`;
+        changeElement.className = `metric-value ${change >= 0 ? 'positive' : 'negative'}`;
+    }
+    
+    // Format chart data - last 30 days
+    const chartData = data.slice(-30).map(d => ({
+        x: new Date(d.date).getTime(),
+        y: parseFloat(d.close)
+    }));
+    
+    const options = {
+        chart: {
+            type: 'area',
+            height: 200,
+            toolbar: {
+                show: false
+            },
+            animations: {
+                enabled: true
+            }
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 2
+        },
+        series: [{
+            name: 'Price',
+            data: chartData
+        }],
+        colors: [side === 'left' ? '#3b82f6' : '#ef4444'],
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.7,
+                opacityTo: 0.2,
+                stops: [0, 90, 100]
+            }
+        },
+        xaxis: {
+            type: 'datetime',
+            labels: {
+                show: false
+            },
+            axisBorder: {
+                show: false
+            },
+            axisTicks: {
+                show: false
+            }
+        },
+        yaxis: {
+            labels: {
+                style: {
+                    fontFamily: 'Roboto Mono, monospace',
+                    fontSize: '10px'
+                },
+                formatter: function(val) {
+                    return '$' + val.toFixed(0);
+                }
+            }
+        },
+        grid: {
+            show: false
+        },
+        tooltip: {
+            x: {
+                format: 'MMM dd'
+            }
+        },
+        dataLabels: {
+            enabled: false
+        }
+    };
+    
+    if (side === 'left') {
+        if (parallelChartLeft) {
+            parallelChartLeft.destroy();
+        }
+        parallelChartLeft = new ApexCharts(chartElement, options);
+        parallelChartLeft.render();
+    } else {
+        if (parallelChartRight) {
+            parallelChartRight.destroy();
+        }
+        parallelChartRight = new ApexCharts(chartElement, options);
+        parallelChartRight.render();
+    }
+}
+
+function updateParallelSentiment(data, side, ticker) {
+    const sentimentElement = document.getElementById(`sentiment-${side}`);
+    const sentimentScore = Math.round(data.sentiment_score * 100);
+    sentimentElement.textContent = `${sentimentScore}%`;
+    
+    // Update winner section if both sides have data
+    const otherSide = side === 'left' ? 'right' : 'left';
+    const otherSentimentElement = document.getElementById(`sentiment-${otherSide}`);
+    const otherPriceElement = document.getElementById(`price-${otherSide}`);
+    const priceElement = document.getElementById(`price-${side}`);
+    const changeElement = document.getElementById(`change-${side}`);
+    const otherChangeElement = document.getElementById(`change-${otherSide}`);
+    
+    if (otherSentimentElement.textContent !== '0%' && 
+        otherPriceElement.textContent !== '$0.00' && 
+        priceElement.textContent !== '$0.00') {
+        
+        determineWinner();
+    }
+}
+
+function determineWinner() {
+    const leftChange = parseFloat(document.getElementById('change-left').textContent);
+    const rightChange = parseFloat(document.getElementById('change-right').textContent);
+    const leftSentiment = parseFloat(document.getElementById('sentiment-left').textContent);
+    const rightSentiment = parseFloat(document.getElementById('sentiment-right').textContent);
+    
+    const leftTicker = document.getElementById('ticker-left').value;
+    const rightTicker = document.getElementById('ticker-right').value;
+    
+    let winner;
+    let reason;
+    
+    // Simple scoring system
+    const leftScore = leftChange + leftSentiment * 0.5;
+    const rightScore = rightChange + rightSentiment * 0.5;
+    
+    if (leftScore > rightScore) {
+        winner = leftTicker;
+        reason = leftChange > rightChange ? 
+            `Better price performance (+${leftChange}% vs ${rightChange}%)` : 
+            `Stronger market sentiment (${leftSentiment}% vs ${rightSentiment}%)`;
+    } else if (rightScore > leftScore) {
+        winner = rightTicker;
+        reason = rightChange > leftChange ? 
+            `Better price performance (+${rightChange}% vs ${leftChange}%)` : 
+            `Stronger market sentiment (${rightSentiment}% vs ${leftSentiment}%)`;
+    } else {
+        winner = "Tie";
+        reason = "Both stocks are performing equally";
+    }
+    
+    document.getElementById('winner-ticker').textContent = winner;
+    document.getElementById('winner-reason').textContent = reason;
+    
+    // Highlight winner
+    document.querySelector('.left-side').classList.remove('winner');
+    document.querySelector('.right-side').classList.remove('winner');
+    
+    if (winner === leftTicker) {
+        document.querySelector('.left-side').classList.add('winner');
+    } else if (winner === rightTicker) {
+        document.querySelector('.right-side').classList.add('winner');
+    }
+}
+
+
+// Text to speech functionality
+function initTextToSpeech() {
+    // Add TTS buttons to chart sections
+    document.querySelectorAll('.card-header').forEach(header => {
+        const ttsBtn = document.createElement('button');
+        ttsBtn.className = 'btn-tts';
+        ttsBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        ttsBtn.addEventListener('click', function() {
+            const cardBody = header.nextElementSibling;
+            const cardTitle = header.textContent.trim();
+            let textToRead = `${cardTitle}. `;
+            
+            // Get appropriate content based on section
+            if (cardTitle.includes('Price History')) {
+                const ticker = document.getElementById('company-name').textContent;
+                const price = document.getElementById('stock-price').textContent;
+                const change = document.getElementById('price-change').textContent;
+                textToRead += `Current price for ${ticker} is ${price}, ${change}.`;
+            } else if (cardTitle.includes('Sentiment')) {
+                const bullish = document.getElementById('bullish-score').textContent;
+                const sector = document.getElementById('sector-score').textContent;
+                textToRead += `Bullish sentiment is ${bullish}, compared to sector average of ${sector}.`;
+            } else if (cardTitle.includes('News')) {
+                const newsItems = document.querySelectorAll('.news-item');
+                if (newsItems.length > 0) {
+                    textToRead += `Here are the top ${Math.min(3, newsItems.length)} news headlines. `;
+                    for (let i = 0; i < Math.min(3, newsItems.length); i++) {
+                        const title = newsItems[i].querySelector('.news-title').textContent;
+                        const source = newsItems[i].querySelector('.news-source').textContent;
+                        textToRead += `${title}. From ${source}. `;
+                    }
+                } else {
+                    textToRead += "No recent news found.";
+                }
+            }
+            
+            speak(textToRead);
+        });
+        
+        header.appendChild(ttsBtn);
+    });
+}
+
+// Read news aloud function
+function readNewsAloud(newsItem) {
+    const title = newsItem.querySelector('.news-title').textContent;
+    const source = newsItem.querySelector('.news-source').textContent;
+    const text = `${title}. From ${source}.`;
+    speak(text);
+}
+
+// Initialize TTS
+document.addEventListener('DOMContentLoaded', function() {
+    initTextToSpeech();
+});

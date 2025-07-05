@@ -496,198 +496,59 @@ function updateSentimentChart(bullishSentiment, sectorSentiment) {
     }
 }
 
-// Update company info display
+// Modify the updateCompanyInfo function in charts.js
 function updateCompanyInfo(ticker, latestData) {
     try {
-        // Company mapping data
-        const companyInfo = {
-            'AAPL': {
-                name: 'Apple Inc.',
-                sector: 'Technology',
-                exchange: 'NASDAQ',
-                logo: 'fa-apple',
-                metrics: {
-                    pe: 28.5,
-                    marketCap: '2.45T',
-                    avgVolume: '29.8M',
-                    dividend: '0.92 (0.61%)',
-                    beta: '1.28',
-                    eps: '$5.28'
-                }
-            },
-            'MSFT': {
-                name: 'Microsoft Corporation',
-                sector: 'Technology',
-                exchange: 'NASDAQ',
-                logo: 'fa-microsoft',
-                metrics: {
-                    pe: 34.7,
-                    marketCap: '2.81T',
-                    avgVolume: '25.3M',
-                    dividend: '2.72 (0.81%)',
-                    beta: '0.93',
-                    eps: '$9.65'
-                }
-            },
-            'GOOGL': {
-                name: 'Alphabet Inc.',
-                sector: 'Technology',
-                exchange: 'NASDAQ',
-                logo: 'fa-google',
-                metrics: {
-                    pe: 26.4,
-                    marketCap: '1.70T',
-                    avgVolume: '18.5M',
-                    dividend: 'N/A',
-                    beta: '1.06',
-                    eps: '$5.80'
-                }
-            },
-            'AMZN': {
-                name: 'Amazon.com, Inc.',
-                sector: 'Consumer Cyclical',
-                exchange: 'NASDAQ',
-                logo: 'fa-amazon',
-                metrics: {
-                    pe: 41.8,
-                    marketCap: '1.85T',
-                    avgVolume: '32.4M',
-                    dividend: 'N/A',
-                    beta: '1.24',
-                    eps: '$2.90'
-                }
-            },
-            'META': {
-                name: 'Meta Platforms, Inc.',
-                sector: 'Technology',
-                exchange: 'NASDAQ',
-                logo: 'fa-facebook',
-                metrics: {
-                    pe: 23.6,
-                    marketCap: '1.12T',
-                    avgVolume: '15.7M',
-                    dividend: 'N/A',
-                    beta: '1.42',
-                    eps: '$13.62'
-                }
-            },
-            'TSLA': {
-                name: 'Tesla, Inc.',
-                sector: 'Automotive',
-                exchange: 'NASDAQ',
-                logo: 'fa-car',
-                metrics: {
-                    pe: 47.2,
-                    marketCap: '862.5B',
-                    avgVolume: '42.6M',
-                    dividend: 'N/A',
-                    beta: '2.01',
-                    eps: '$4.30'
-                }
-            }
-        };
-        
-        // Get company info or use defaults
-        const company = companyInfo[ticker] || {
-            name: ticker,
-            sector: 'Unknown',
-            exchange: 'NYSE',
-            logo: 'fa-building',
-            metrics: {
-                pe: 'N/A',
-                marketCap: 'N/A',
-                avgVolume: 'N/A',
-                dividend: 'N/A',
-                beta: 'N/A',
-                eps: 'N/A'
-            }
-        };
-        
-        // Update company name and info
-        const companyNameElement = document.getElementById('company-name');
-        if (companyNameElement) companyNameElement.textContent = `${company.name} (${ticker})`;
-        
-        const companySectorElement = document.getElementById('company-sector');
-        if (companySectorElement) companySectorElement.textContent = company.sector;
-        
-        const companyExchangeElement = document.getElementById('company-exchange');
-        if (companyExchangeElement) companyExchangeElement.textContent = company.exchange;
-        
-        // Update company logo
-        updateCompanyLogo(ticker);
-        
-        // Format price
-        const price = parseFloat(latestData.close).toFixed(2);
-        const stockPriceElement = document.getElementById('stock-price');
-        if (stockPriceElement) stockPriceElement.textContent = `$${price}`;
-        
-        // Calculate change from previous day
-        if (window.stockData && window.stockData.length > 1) {
-            const previousDayData = window.stockData[window.stockData.length - 2];
-            if (previousDayData) {
-                const change = parseFloat(latestData.close) - parseFloat(previousDayData.close);
-                const percentChange = (change / parseFloat(previousDayData.close)) * 100;
-                
-                const changeElement = document.getElementById('price-change');
-                if (changeElement) {
-                    changeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)} (${percentChange.toFixed(2)}%)`;
-                    
-                    if (change >= 0) {
-                        changeElement.className = 'change positive';
-                    } else {
-                        changeElement.className = 'change negative';
-                    }
-                }
-            }
+        // Check if data is reasonable before processing
+        if (latestData && (latestData.close > 1000000 || isNaN(parseFloat(latestData.close)))) {
+            // Unreasonable values detected - show error
+            showTickerError(ticker);
+            return;
         }
         
-        // Update volume
-        const volumeElement = document.getElementById('volume');
-        if (volumeElement) volumeElement.textContent = formatNumber(latestData.volume);
-        
-        // Update additional metrics
-        const peRatioElement = document.getElementById('pe-ratio');
-        if (peRatioElement) peRatioElement.textContent = company.metrics.pe;
-        
-        const marketCapElement = document.getElementById('market-cap');
-        if (marketCapElement) marketCapElement.textContent = company.metrics.marketCap;
-        
-        const avgVolumeElement = document.getElementById('avg-volume');
-        if (avgVolumeElement) avgVolumeElement.textContent = company.metrics.avgVolume;
-        
-        const dividendElement = document.getElementById('dividend');
-        if (dividendElement) dividendElement.textContent = company.metrics.dividend;
-        
-        const betaElement = document.getElementById('beta');
-        if (betaElement) betaElement.textContent = company.metrics.beta;
-        
-        const epsElement = document.getElementById('eps');
-        if (epsElement) epsElement.textContent = company.metrics.eps;
-        
-        // Calculate year high/low
-        if (window.stockData.length > 0) {
-            const prices = window.stockData.map(d => parseFloat(d.high));
-            const yearHigh = Math.max(...prices).toFixed(2);
-            const yearLow = Math.min(...prices).toFixed(2);
-            
-            const yearHighElement = document.getElementById('year-high');
-            if (yearHighElement) yearHighElement.textContent = `$${yearHigh}`;
-            
-            const yearLowElement = document.getElementById('year-low');
-            if (yearLowElement) yearLowElement.textContent = `$${yearLow}`;
-        }
-        
-        console.log("Company info updated for:", ticker);
-        
-        // Reset animation flags for metrics to allow re-animation
-        document.querySelectorAll('.metric-value').forEach(element => {
-            element.dataset.animated = "";
-        });
-        
-        // Trigger metrics animation
-        setTimeout(animateNumbers, 200);
+        // Rest of your existing function...
     } catch (error) {
         console.error("Error updating company info:", error);
+        showTickerError(ticker);
+    }
+}
+
+// Add this new function to display a nice error message
+function showTickerError(ticker) {
+    // Update UI to show error state
+    const companyNameElement = document.getElementById('company-name');
+    if (companyNameElement) companyNameElement.textContent = `Unknown Ticker: ${ticker}`;
+    
+    // Clear data displays
+    document.getElementById('stock-price').textContent = 'N/A';
+    document.getElementById('price-change').textContent = 'No data available';
+    document.getElementById('price-change').className = 'change';
+    
+    // Show creative error message in chart area
+    const chartElement = document.getElementById('price-chart');
+    if (chartElement) {
+        chartElement.innerHTML = `
+            <div class="ticker-error">
+                <div class="error-icon"><i class="fas fa-search"></i></div>
+                <h3>Ticker Not Found</h3>
+                <p>We couldn't find any data for "${ticker}"</p>
+                <div class="suggestions">
+                    <p>Try one of these popular tickers:</p>
+                    <div class="suggestion-buttons">
+                        <button onclick="document.getElementById('ticker-input').value='AAPL';performSearch()">AAPL</button>
+                        <button onclick="document.getElementById('ticker-input').value='MSFT';performSearch()">MSFT</button>
+                        <button onclick="document.getElementById('ticker-input').value='GOOGL';performSearch()">GOOGL</button>
+                        <button onclick="document.getElementById('ticker-input').value='AMZN';performSearch()">AMZN</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Clear news container
+    const newsContainer = document.getElementById('news-container');
+    if (newsContainer) {
+        newsContainer.innerHTML = '<div class="no-news">No news found for this ticker.</div>';
     }
 }
 

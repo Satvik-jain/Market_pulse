@@ -19,6 +19,76 @@
 </head>
 <body>
     <!-- Top navigation bar -->
+     <!-- Add to navbar -->
+<button id="enable-parallel" class="btn btn-sm ms-2">
+    <i class="fas fa-users me-1"></i> Dual Mode
+</button>
+
+<!-- Parallel mode overlay -->
+<div id="parallel-mode" class="parallel-mode">
+    <div class="parallel-container">
+        <div class="parallel-header">
+            <h4>Dual User Mode</h4>
+            <button id="close-parallel" class="btn-close"></button>
+        </div>
+        <div class="parallel-content">
+            <div class="parallel-side left-side">
+                <div class="parallel-user">User 1</div>
+                <div class="parallel-controls">
+                    <input type="text" class="form-control" id="ticker-left" placeholder="Enter ticker...">
+                    <button class="btn search-btn" id="search-left">Search</button>
+                </div>
+                <div class="parallel-chart" id="chart-left"></div>
+                <div class="parallel-metrics">
+                    <div class="metric-box">
+                        <div class="metric-title">Price</div>
+                        <div class="metric-value" id="price-left">$0.00</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">Change</div>
+                        <div class="metric-value" id="change-left">0.00%</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">Sentiment</div>
+                        <div class="metric-value" id="sentiment-left">0%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="parallel-divider">
+                <div class="vs-badge">VS</div>
+            </div>
+            <div class="parallel-side right-side">
+                <div class="parallel-user">User 2</div>
+                <div class="parallel-controls">
+                    <input type="text" class="form-control" id="ticker-right" placeholder="Enter ticker...">
+                    <button class="btn search-btn" id="search-right">Search</button>
+                </div>
+                <div class="parallel-chart" id="chart-right"></div>
+                <div class="parallel-metrics">
+                    <div class="metric-box">
+                        <div class="metric-title">Price</div>
+                        <div class="metric-value" id="price-right">$0.00</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">Change</div>
+                        <div class="metric-value" id="change-right">0.00%</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">Sentiment</div>
+                        <div class="metric-value" id="sentiment-right">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="parallel-footer">
+            <div class="winner-section" id="winner-section">
+                <div class="winner-title">Today's Winner:</div>
+                <div class="winner-ticker" id="winner-ticker">-</div>
+                <div class="winner-reason" id="winner-reason">Compare stocks to see the winner</div>
+            </div>
+        </div>
+    </div>
+</div>
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container-fluid px-4">
             <a class="navbar-brand d-flex align-items-center" href="/">
