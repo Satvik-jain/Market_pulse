@@ -687,6 +687,89 @@ def get_stock_sentiment():
     
     return jsonify(result)
 
+
+@app.route('/api/stock_metrics', methods=['GET'])
+def get_stock_metrics():
+    """API endpoint to get stock key metrics"""
+    # Clean cache periodically
+    clean_cache()
+    
+    # Get and validate ticker
+    ticker = request.args.get('ticker', 'AAPL').upper()
+    if not validate_ticker(ticker):
+        return jsonify({
+            'error': 'Invalid ticker symbol format'
+        }), 400
+    
+    # Check cache first
+    cache_key = f"metrics_{ticker}"
+    if cache_key in cache and (datetime.datetime.now() - cache[cache_key]['timestamp']).seconds < cache_duration:
+        logger.info(f"Returning cached metrics for {ticker}")
+        return jsonify(cache[cache_key]['data'])
+    
+    try:
+        # Use yfinance to get stock metrics
+        logger.info(f"Fetching metrics for {ticker} using Yahoo Finance")
+        
+        # Get stock info
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        
+        # Extract key metrics
+        metrics = {
+            'sector': info.get('sector', 'N/A'),
+            'exchange': info.get('exchange', 'N/A'),
+            'pe': str(round(info.get('trailingPE', 0), 2)) if info.get('trailingPE') else 'N/A',
+            'marketCap': format_market_cap(info.get('marketCap', 0)),
+            'yearHigh': f"${info.get('fiftyTwoWeekHigh', 0):.2f}",
+            'yearLow': f"${info.get('fiftyTwoWeekLow', 0):.2f}",
+            'avgVolume': format_volume(info.get('averageVolume', 0)),
+            'dividend': format_dividend(info.get('dividendRate', 0), info.get('dividendYield', 0)),
+            'beta': str(round(info.get('beta', 0), 2)),
+            'eps': f"${info.get('trailingEps', 0):.2f}" if info.get('trailingEps') else 'N/A'
+        }
+        
+    except Exception as e:
+        logger.warning(f"Error fetching metrics: {e}, falling back to mock data")
+        # Fallback to mock data
+        if ticker in MOCK_DATA:
+            mock_data = MOCK_DATA[ticker]
+            metrics = {
+                'sector': mock_data.get('sector', 'N/A'),
+                'exchange': mock_data.get('exchange', 'N/A'),
+                'pe': str(mock_data.get('pe_ratio', 'N/A')),
+                'marketCap': mock_data.get('market_cap', 'N/A'),
+                'yearHigh': f"${mock_data.get('year_high', 0):.2f}",
+                'yearLow': f"${mock_data.get('year_low', 0):.2f}",
+                'avgVolume': mock_data.get('avg_volume', 'N/A'),
+                'dividend': mock_data.get('dividend', 'N/A'),
+                'beta': str(mock_data.get('beta', 'N/A')),
+                'eps': f"${mock_data.get('eps', 0):.2f}" if mock_data.get('eps') else 'N/A'
+            }
+        else:
+            # Default values for unknown tickers
+            metrics = {
+                'sector': 'Unknown',
+                'exchange': 'NYSE',
+                'pe': 'N/A',
+                'marketCap': 'N/A',
+                'yearHigh': 'N/A',
+                'yearLow': 'N/A',
+                'avgVolume': 'N/A',
+                'dividend': 'N/A',
+                'beta': 'N/A',
+                'eps': 'N/A'
+            }
+    
+    # Store in cache
+    cache[cache_key] = {
+        'timestamp': datetime.datetime.now(),
+        'data': metrics
+    }
+    
+    return jsonify(metrics)
+
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
@@ -697,6 +780,44 @@ def server_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
+    def format_market_cap(market_cap):
+        """Format market cap value into human-readable format"""
+        if not market_cap:
+            return 'N/A'
+        
+        if market_cap >= 1_000_000_000_000:  # Trillion
+            return f"{market_cap / 1_000_000_000_000:.2f}T"
+        elif market_cap >= 1_000_000_000:  # Billion
+            return f"{market_cap / 1_000_000_000:.2f}B"
+        elif market_cap >= 1_000_000:  # Million
+            return f"{market_cap / 1_000_000:.2f}M"
+        else:
+            return f"{market_cap:.2f}"
+
+    def format_volume(volume):
+        """Format volume into human-readable format"""
+        if not volume:
+            return 'N/A'
+        
+        if volume >= 1_000_000_000:  # Billion
+            return f"{volume / 1_000_000_000:.1f}B"
+        elif volume >= 1_000_000:  # Million
+            return f"{volume / 1_000_000:.1f}M"
+        elif volume >= 1_000:  # Thousand
+            return f"{volume / 1_000:.1f}K"
+        else:
+            return str(volume)
+
+    def format_dividend(rate, yield_val):
+        """Format dividend information"""
+        if not rate:
+            return 'N/A'
+        
+        if yield_val:
+            return f"{rate:.2f} ({yield_val*100:.2f}%)"
+        else:
+            return f"{rate:.2f}"
+
     # Use environment variable PORT if available
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)

@@ -362,6 +362,63 @@ function performSearch() {
     }
 }
 
+// Update key metrics from API data
+function updateKeyMetricsFromAPI(ticker, metricsData) {
+    try {
+        if (!metricsData) {
+            console.warn("No metrics data provided for ticker:", ticker);
+            return;
+        }
+        
+        console.log("Updating key metrics from API for:", ticker, metricsData);
+        
+        // Update metrics on the page
+        document.querySelectorAll('[data-metric]').forEach(element => {
+            const metric = element.getAttribute('data-metric');
+            if (metricsData[metric] !== undefined) {
+                element.textContent = metricsData[metric];
+            }
+        });
+        
+        // Special case for 52 week high/low
+        const yearHighElement = document.querySelector('[data-metric="yearHigh"]');
+        if (yearHighElement && metricsData.yearHigh) {
+            yearHighElement.textContent = metricsData.yearHigh;
+        }
+        
+        const yearLowElement = document.querySelector('[data-metric="yearLow"]');
+        if (yearLowElement && metricsData.yearLow) {
+            yearLowElement.textContent = metricsData.yearLow;
+        }
+        
+        console.log("Key metrics updated from API for:", ticker);
+    } catch (error) {
+        console.error("Error updating metrics from API:", error);
+    }
+}
+
+
+// Load key metrics data from API
+function loadKeyMetricsData(ticker) {
+    console.log("Loading key metrics for:", ticker);
+    
+    fetch(`/api/stock_metrics?ticker=${ticker}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Update metrics with the data
+            updateKeyMetricsFromAPI(ticker, data);
+        })
+        .catch(error => {
+            console.error('Error fetching key metrics data:', error);
+            // Fallback to the hardcoded metrics in charts.js
+        });
+}
+
 // Creative error handling for invalid tickers
 function showTickerError(ticker) {
     // Hide loading overlays
@@ -488,6 +545,7 @@ function updateChartTheme(chart) {
 }
 
 // Load stock data from API
+// Load stock data from API
 function loadStockData(ticker) {
     console.log("Loading stock data for:", ticker);
     
@@ -512,6 +570,9 @@ function loadStockData(ticker) {
                 
                 // Update company info
                 updateCompanyInfo(ticker, data[data.length-1]);
+                
+                // Load key metrics data - ADD THIS LINE
+                loadKeyMetricsData(ticker);
                 
                 // Initialize price chart with a slight delay to ensure DOM is ready
                 setTimeout(() => {
