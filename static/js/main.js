@@ -22,8 +22,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize accessibility features
     initAccessibility();
     
-    // Default ticker
-    let currentTicker = 'AAPL';
+    // Check URL for ticker parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const tickerParam = urlParams.get('ticker');
+    
+    // Default ticker - use URL parameter if available, otherwise default to AAPL
+    let currentTicker = tickerParam ? tickerParam.toUpperCase() : 'AAPL';
+    
+    // Update the search input to show the current ticker
+    const tickerInput = document.getElementById('ticker-input');
+    if (tickerInput && tickerParam) {
+        tickerInput.value = currentTicker;
+    }
     
     // Load initial data
     loadStockData(currentTicker);
@@ -309,46 +319,44 @@ function updateLogoForTheme(marketTheme, isDark) {
 }
 
 // Search function
+// Search function
+// Search function
 function performSearch() {
     const ticker = document.getElementById('ticker-input').value.trim().toUpperCase();
     if (ticker) {
-        // Show loading indicator
+        // Show loading indicator first
         document.querySelectorAll('.loading-overlay').forEach(overlay => {
             overlay.classList.add('active');
         });
         
-        // Validate ticker first
+        // Validate ticker (optional - you can keep your existing validation)
         fetch(`/api/validate_ticker?ticker=${ticker}`)
             .then(response => response.json())
             .then(data => {
                 if (data.valid) {
-                    // Update company logo
-                    updateCompanyLogo(ticker);
-                    
-                    // Load data
-                    loadStockData(ticker);
-                    loadNewsData(ticker);
-                    loadSentimentData(ticker);
-                    
-                    // Update URL without reloading page
-                    const url = new URL(window.location);
-                    url.searchParams.set('ticker', ticker);
-                    window.history.pushState({}, '', url);
+                    // Redirect to the same page with the new ticker as a parameter
+                    window.location.href = `/?ticker=${ticker}`;
                 } else {
-                    // Show custom error
+                    // Show custom error for invalid ticker
                     showTickerError(ticker);
+                    // Hide loading overlays
+                    document.querySelectorAll('.loading-overlay').forEach(overlay => {
+                        overlay.classList.remove('active');
+                    });
                 }
             })
             .catch(() => {
-                // Fallback to local validation
+                // Fallback to local validation without API
                 if (['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA'].includes(ticker)) {
-                    // Known tickers - proceed
-                    updateCompanyLogo(ticker);
-                    loadStockData(ticker);
-                    loadNewsData(ticker);
-                    loadSentimentData(ticker);
+                    // Valid ticker - redirect
+                    window.location.href = `/?ticker=${ticker}`;
                 } else {
+                    // Invalid ticker
                     showTickerError(ticker);
+                    // Hide loading overlays
+                    document.querySelectorAll('.loading-overlay').forEach(overlay => {
+                        overlay.classList.remove('active');
+                    });
                 }
             });
     }
